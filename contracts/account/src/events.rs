@@ -20,3 +20,13 @@ pub fn publish_account_initialized_event(
     }
     .publish(env);
 }
+
+#[contractevent]
+pub struct TokenAddedEvent {
+    pub token: Address,
+    pub timestamp: u64,
+}
+
+pub fn publish_token_added_event(env: &Env, token: Address, timestamp: u64) {
+    TokenAddedEvent { token, timestamp }.publish(env);
+}

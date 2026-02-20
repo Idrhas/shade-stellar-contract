@@ -1,11 +1,34 @@
 use crate::errors::ContractError;
-use crate::events::publish_account_initialized_event;
+use crate::events::{publish_account_initialized_event, publish_token_added_event};
 use crate::interface::MerchantAccountTrait;
-use crate::types::{AccountInfo, DataKey};
-use soroban_sdk::{contract, contractimpl, panic_with_error, Address, Env};
+use crate::types::{AccountInfo, DataKey, TokenBalance};
+use soroban_sdk::{contract, contractimpl, panic_with_error, token, Address, Env, Vec};
 
 #[contract]
 pub struct MerchantAccount;
+
+fn get_manager(env: &Env) -> Address {
+    env.storage()
+        .persistent()
+        .get(&DataKey::Manager)
+        .unwrap_or_else(|| panic_with_error!(env, ContractError::NotInitialized))
+}
+
+fn get_tracked_tokens(env: &Env) -> Vec<Address> {
+    env.storage()
+        .persistent()
+        .get(&DataKey::TrackedTokens)
+        .unwrap_or_else(|| Vec::new(env))
+}
+
+fn token_exists(tracked_tokens: &Vec<Address>, token: &Address) -> bool {
+    for tracked_token in tracked_tokens.iter() {
+        if tracked_token == token.clone() {
+            return true;
+        }
+    }
+    false
+}
 
 #[contractimpl]
 impl MerchantAccountTrait for MerchantAccount {
@@ -38,5 +61,47 @@ impl MerchantAccountTrait for MerchantAccount {
             .persistent()
             .get(&DataKey::Merchant)
             .unwrap_or_else(|| panic_with_error!(&env, ContractError::NotInitialized))
+    }
+
+    fn add_token(env: Env, token: Address) {
+        let manager = get_manager(&env);
+        manager.require_auth();
+
+        let mut tracked_tokens = get_tracked_tokens(&env);
+        if token_exists(&tracked_tokens, &token) {
+            return;
+        }
+
+        tracked_tokens.push_back(token.clone());
+        env.storage()
+            .persistent()
+            .set(&DataKey::TrackedTokens, &tracked_tokens);
+        publish_token_added_event(&env, token, env.ledger().timestamp());
+    }
+
+    fn has_token(env: Env, token: Address) -> bool {
+        let tracked_tokens = get_tracked_tokens(&env);
+        token_exists(&tracked_tokens, &token)
+    }
+
+    fn get_balance(env: Env, token: Address) -> i128 {
+        let token_client = token::TokenClient::new(&env, &token);
+        token_client.balance(&env.current_contract_address())
+    }
+
+    fn get_balances(env: Env) -> Vec<TokenBalance> {
+        let tracked_tokens = get_tracked_tokens(&env);
+        let contract_address = env.current_contract_address();
+        let mut balances = Vec::new(&env);
+
+        for tracked_token in tracked_tokens.iter() {
+            let balance = token::TokenClient::new(&env, &tracked_token).balance(&contract_address);
+            balances.push_back(TokenBalance {
+                token: tracked_token,
+                balance,
+            });
+        }
+
+        balances
     }
 }

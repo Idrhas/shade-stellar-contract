@@ -6,6 +6,7 @@ pub enum DataKey {
     Merchant,
     Verified,
     AccountInfo,
+    TrackedTokens,
 }
 
 #[contracttype]
@@ -15,4 +16,11 @@ pub struct AccountInfo {
     pub merchant_id: u64,
     pub merchant: Address,
     pub date_created: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TokenBalance {
+    pub token: Address,
+    pub balance: i128,
 }
