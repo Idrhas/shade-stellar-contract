@@ -10,4 +10,6 @@ pub enum ContractError {
     Reentrancy = 4,
     MerchantAlreadyRegistered = 5,
     MerchantNotFound = 6,
+    InvalidAmount = 7,
+    InvoiceNotFound = 8,
 }

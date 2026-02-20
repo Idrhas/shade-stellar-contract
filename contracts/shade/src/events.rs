@@ -50,3 +50,27 @@ pub fn publish_merchant_registered_event(
     }
     .publish(env);
 }
+
+#[contractevent]
+pub struct InvoiceCreatedEvent {
+    pub invoice_id: u64,
+    pub merchant: Address,
+    pub amount: i128,
+    pub token: Address,
+}
+
+pub fn publish_invoice_created_event(
+    env: &Env,
+    invoice_id: u64,
+    merchant: Address,
+    amount: i128,
+    token: Address,
+) {
+    InvoiceCreatedEvent {
+        invoice_id,
+        merchant,
+        amount,
+        token,
+    }
+    .publish(env);
+}

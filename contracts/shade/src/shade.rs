@@ -1,11 +1,12 @@
 use crate::components::{
-    admin as admin_component, core as core_component, merchant as merchant_component,
+    admin as admin_component, core as core_component, invoice as invoice_component,
+    merchant as merchant_component,
 };
 use crate::errors::ContractError;
 use crate::events;
 use crate::interface::ShadeTrait;
-use crate::types::{ContractInfo, DataKey, Merchant};
-use soroban_sdk::{contract, contractimpl, panic_with_error, Address, Env};
+use crate::types::{ContractInfo, DataKey, Invoice, Merchant};
+use soroban_sdk::{contract, contractimpl, panic_with_error, Address, Env, String};
 
 #[contract]
 pub struct Shade;
@@ -52,5 +53,19 @@ impl ShadeTrait for Shade {
 
     fn is_merchant(env: Env, merchant: Address) -> bool {
         merchant_component::is_merchant(&env, &merchant)
+    }
+
+    fn create_invoice(
+        env: Env,
+        merchant: Address,
+        description: String,
+        amount: i128,
+        token: Address,
+    ) -> u64 {
+        invoice_component::create_invoice(&env, &merchant, &description, amount, &token)
+    }
+
+    fn get_invoice(env: Env, invoice_id: u64) -> Invoice {
+        invoice_component::get_invoice(&env, invoice_id)
     }
 }

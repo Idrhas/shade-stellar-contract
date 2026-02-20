@@ -39,7 +39,8 @@ pub struct Merchant {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Invoice {
     pub id: u64,
-    pub amount: u128,
+    pub description: soroban_sdk::String,
+    pub amount: i128,
     pub token: Address,
     pub status: InvoiceStatus,
     pub merchant_id: u64,
