@@ -13,4 +13,6 @@ pub enum ContractError {
     InvalidAmount = 7,
     InvoiceNotFound = 8,
     MerchantKeyNotFound = 9,
+    ContractPaused = 10,
+    ContractNotPaused = 11,
 }

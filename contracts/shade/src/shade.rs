@@ -1,12 +1,12 @@
 use crate::components::{
-    admin as admin_component, core as core_component, invoice as invoice_component,
-    merchant as merchant_component,
+    access_control as access_control_component, admin as admin_component, core as core_component,
+    invoice as invoice_component, merchant as merchant_component, pausable as pausable_component,
 };
 use crate::errors::ContractError;
 use crate::events;
 use crate::interface::ShadeTrait;
-use crate::types::{ContractInfo, DataKey, Invoice, Merchant};
-use soroban_sdk::{contract, contractimpl, panic_with_error, Address, BytesN, Env, String};
+use crate::types::{ContractInfo, DataKey, Invoice, InvoiceFilter, Merchant, MerchantFilter, Role};
+use soroban_sdk::{contract, contractimpl, panic_with_error, Address, BytesN, Env, String, Vec};
 
 #[contract]
 pub struct Shade;
@@ -32,10 +32,12 @@ impl ShadeTrait for Shade {
     }
 
     fn add_accepted_token(env: Env, admin: Address, token: Address) {
+        pausable_component::assert_not_paused(&env);
         admin_component::add_accepted_token(&env, &admin, &token);
     }
 
     fn remove_accepted_token(env: Env, admin: Address, token: Address) {
+        pausable_component::assert_not_paused(&env);
         admin_component::remove_accepted_token(&env, &admin, &token);
     }
 
@@ -44,11 +46,16 @@ impl ShadeTrait for Shade {
     }
 
     fn register_merchant(env: Env, merchant: Address) {
+        pausable_component::assert_not_paused(&env);
         merchant_component::register_merchant(&env, &merchant);
     }
 
     fn get_merchant(env: Env, merchant_id: u64) -> Merchant {
         merchant_component::get_merchant(&env, merchant_id)
+    }
+
+    fn get_merchants(env: Env, filter: MerchantFilter) -> Vec<Merchant> {
+        merchant_component::get_merchants(&env, filter)
     }
 
     fn is_merchant(env: Env, merchant: Address) -> bool {
@@ -62,6 +69,7 @@ impl ShadeTrait for Shade {
         amount: i128,
         token: Address,
     ) -> u64 {
+        pausable_component::assert_not_paused(&env);
         invoice_component::create_invoice(&env, &merchant, &description, amount, &token)
     }
 
@@ -75,5 +83,33 @@ impl ShadeTrait for Shade {
 
     fn get_merchant_key(env: Env, merchant: Address) -> BytesN<32> {
         merchant_component::get_merchant_key(&env, &merchant)
+    }
+
+    fn grant_role(env: Env, admin: Address, user: Address, role: Role) {
+        access_control_component::grant_role(&env, &admin, &user, role);
+    }
+
+    fn revoke_role(env: Env, admin: Address, user: Address, role: Role) {
+        access_control_component::revoke_role(&env, &admin, &user, role);
+    }
+
+    fn has_role(env: Env, user: Address, role: Role) -> bool {
+        access_control_component::has_role(&env, &user, role)
+    }
+
+    fn get_invoices(env: Env, filter: InvoiceFilter) -> Vec<Invoice> {
+        invoice_component::get_invoices(&env, filter)
+    }
+
+    fn pause(env: Env, admin: Address) {
+        pausable_component::pause(&env, &admin);
+    }
+
+    fn unpause(env: Env, admin: Address) {
+        pausable_component::unpause(&env, &admin);
+    }
+
+    fn is_paused(env: Env) -> bool {
+        pausable_component::is_paused(&env)
     }
 }
