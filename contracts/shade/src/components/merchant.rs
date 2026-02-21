@@ -1,7 +1,8 @@
+use crate::components::core as core_component;
 use crate::errors::ContractError;
 use crate::events;
 use crate::types::{DataKey, Merchant, MerchantFilter};
-use soroban_sdk::{panic_with_error, Address, Env, Vec};
+use soroban_sdk::{panic_with_error, Address, BytesN, Env, Vec};
 
 pub fn register_merchant(env: &Env, merchant: &Address) {
     merchant.require_auth();
@@ -73,6 +74,45 @@ pub fn is_merchant(env: &Env, merchant: &Address) -> bool {
     env.storage()
         .persistent()
         .has(&DataKey::MerchantId(merchant.clone()))
+}
+
+pub fn verify_merchant(env: &Env, admin: &Address, merchant_id: u64, status: bool) {
+    core_component::assert_admin(env, admin);
+
+    let mut merchant_data = get_merchant(env, merchant_id);
+    merchant_data.verified = status;
+
+    env.storage()
+        .persistent()
+        .set(&DataKey::Merchant(merchant_id), &merchant_data);
+
+    events::publish_merchant_verified_event(env, merchant_id, status, env.ledger().timestamp());
+}
+
+pub fn is_merchant_verified(env: &Env, merchant_id: u64) -> bool {
+    let merchant_data = get_merchant(env, merchant_id);
+    merchant_data.verified
+}
+
+pub fn set_merchant_key(env: &Env, merchant: &Address, key: &BytesN<32>) {
+    merchant.require_auth();
+
+    if !is_merchant(env, merchant) {
+        panic_with_error!(env, ContractError::MerchantNotFound);
+    }
+
+    env.storage()
+        .persistent()
+        .set(&DataKey::MerchantKey(merchant.clone()), key);
+
+    events::publish_merchant_key_set_event(env, merchant.clone(), env.ledger().timestamp());
+}
+
+pub fn get_merchant_key(env: &Env, merchant: &Address) -> BytesN<32> {
+    env.storage()
+        .persistent()
+        .get(&DataKey::MerchantKey(merchant.clone()))
+        .unwrap_or_else(|| panic_with_error!(env, ContractError::MerchantKeyNotFound))
 }
 
 pub fn get_merchants(env: &Env, filter: MerchantFilter) -> Vec<Merchant> {
