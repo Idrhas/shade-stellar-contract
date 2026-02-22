@@ -122,7 +122,7 @@ impl ShadeTrait for Shade {
         pausable_component::is_paused(&env)
     }
 
-    fn upgrade(env: Env, new_wasm_hash: soroban_sdk::BytesN<32>) {
+    fn upgrade(env: Env, new_wasm_hash: BytesN<32>) {
         upgrade_component::upgrade(&env, &new_wasm_hash);
     }
 }

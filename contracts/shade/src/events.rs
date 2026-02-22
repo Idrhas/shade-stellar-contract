@@ -176,19 +176,12 @@ pub fn publish_contract_unpaused_event(env: &Env, admin: Address, timestamp: u64
 
 #[contractevent]
 pub struct ContractUpgradedEvent {
-    pub admin: Address,
-    pub new_wasm_hash: soroban_sdk::BytesN<32>,
+    pub new_wasm_hash: BytesN<32>,
     pub timestamp: u64,
 }
 
-pub fn publish_contract_upgraded_event(
-    env: &Env,
-    admin: Address,
-    new_wasm_hash: soroban_sdk::BytesN<32>,
-    timestamp: u64,
-) {
+pub fn publish_contract_upgraded_event(env: &Env, new_wasm_hash: BytesN<32>, timestamp: u64) {
     ContractUpgradedEvent {
-        admin,
         new_wasm_hash,
         timestamp,
     }
