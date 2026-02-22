@@ -8,6 +8,8 @@ pub trait ShadeTrait {
     fn add_accepted_token(env: Env, admin: Address, token: Address);
     fn remove_accepted_token(env: Env, admin: Address, token: Address);
     fn is_accepted_token(env: Env, token: Address) -> bool;
+    fn set_fee(env: Env, admin: Address, token: Address, fee: i128);
+    fn get_fee(env: Env, token: Address) -> i128;
     fn register_merchant(env: Env, merchant: Address);
     fn get_merchant(env: Env, merchant_id: u64) -> Merchant;
     fn get_merchants(env: Env, filter: MerchantFilter) -> Vec<Merchant>;

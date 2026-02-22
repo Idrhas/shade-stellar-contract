@@ -15,4 +15,5 @@ pub enum ContractError {
     ContractPaused = 9,
     ContractNotPaused = 10,
     MerchantKeyNotFound = 11,
+    TokenNotAccepted = 12,
 }

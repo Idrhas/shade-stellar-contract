@@ -46,6 +46,15 @@ impl ShadeTrait for Shade {
         admin_component::is_accepted_token(&env, &token)
     }
 
+    fn set_fee(env: Env, admin: Address, token: Address, fee: i128) {
+        pausable_component::assert_not_paused(&env);
+        admin_component::set_fee(&env, &admin, &token, fee);
+    }
+
+    fn get_fee(env: Env, token: Address) -> i128 {
+        admin_component::get_fee(&env, &token)
+    }
+
     fn register_merchant(env: Env, merchant: Address) {
         pausable_component::assert_not_paused(&env);
         merchant_component::register_merchant(&env, &merchant);

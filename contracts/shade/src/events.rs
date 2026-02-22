@@ -175,6 +175,22 @@ pub fn publish_contract_unpaused_event(env: &Env, admin: Address, timestamp: u64
 }
 
 #[contractevent]
+pub struct FeeSetEvent {
+    pub token: Address,
+    pub fee: i128,
+    pub timestamp: u64,
+}
+
+pub fn publish_fee_set_event(env: &Env, token: Address, fee: i128, timestamp: u64) {
+    FeeSetEvent {
+        token,
+        fee,
+        timestamp,
+    }
+    .publish(env);
+}
+
+#[contractevent]
 pub struct ContractUpgradedEvent {
     pub new_wasm_hash: BytesN<32>,
     pub timestamp: u64,
