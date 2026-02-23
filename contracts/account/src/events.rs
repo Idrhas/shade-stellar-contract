@@ -41,6 +41,30 @@ pub fn publish_account_verified_event(env: &Env, timestamp: u64) {
 }
 
 #[contractevent]
+pub struct WithdrawalToEvent {
+    pub token: Address,
+    pub recipient: Address,
+    pub amount: i128,
+    pub timestamp: u64,
+}
+
+pub fn publish_withdrawal_to_event(
+    env: &Env,
+    token: Address,
+    recipient: Address,
+    amount: i128,
+    timestamp: u64,
+) {
+    WithdrawalToEvent {
+        token,
+        recipient,
+        amount,
+        timestamp,
+    }
+    .publish(env);
+}
+
+#[contractevent]
 pub struct RefundProcessedEvent {
     pub token: Address,
     pub amount: i128,
