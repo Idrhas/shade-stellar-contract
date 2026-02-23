@@ -30,6 +30,7 @@ pub struct TokenAddedEvent {
 pub fn publish_token_added_event(env: &Env, token: Address, timestamp: u64) {
     TokenAddedEvent { token, timestamp }.publish(env);
 }
+
 #[contractevent]
 pub struct AccountVerified {
     pub timestamp: u64,
@@ -37,4 +38,28 @@ pub struct AccountVerified {
 
 pub fn publish_account_verified_event(env: &Env, timestamp: u64) {
     AccountVerified { timestamp }.publish(env);
+}
+
+#[contractevent]
+pub struct RefundProcessedEvent {
+    pub token: Address,
+    pub amount: i128,
+    pub recipient: Address,
+    pub timestamp: u64,
+}
+
+pub fn publish_refund_processed_event(
+    env: &Env,
+    token: Address,
+    amount: i128,
+    recipient: Address,
+    timestamp: u64,
+) {
+    RefundProcessedEvent {
+        token,
+        amount,
+        recipient,
+        timestamp,
+    }
+    .publish(env);
 }
