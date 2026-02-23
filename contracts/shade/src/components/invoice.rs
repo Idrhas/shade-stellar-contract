@@ -45,6 +45,7 @@ pub fn create_invoice(
         payer: None,
         date_created: env.ledger().timestamp(),
         date_paid: None,
+        amount_refunded: 0,
     };
 
     env.storage()
@@ -130,61 +131,57 @@ pub fn get_invoices(env: &Env, filter: InvoiceFilter) -> Vec<Invoice> {
     invoices
 }
 
-pub fn pay_invoice_admin(env: &Env, admin_or_manager: &Address, invoice_id: u64) -> Invoice {
-    admin_or_manager.require_auth();
-
-    // Check authorization - must have admin or manager role
-    let has_admin_role = access_control::has_role(env, admin_or_manager, Role::Admin);
-    let has_manager_role = access_control::has_role(env, admin_or_manager, Role::Manager);
-
-    if !has_admin_role && !has_manager_role {
-        panic_with_error!(env, ContractError::NotAuthorized);
-    }
-
-    // Get the invoice
+pub fn refund_invoice_partial(env: &Env, invoice_id: u64, amount: i128) {
     let mut invoice = get_invoice(env, invoice_id);
 
-    // Verify invoice status is Pending
-    if invoice.status != InvoiceStatus::Pending {
+    let merchant_address = merchant::get_merchant(env, invoice.merchant_id).address;
+    merchant_address.require_auth();
+
+    if invoice.status != InvoiceStatus::Paid && invoice.status != InvoiceStatus::PartiallyRefunded {
         panic_with_error!(env, ContractError::InvalidInvoiceStatus);
     }
 
-    // Get the fee for this token
-    use crate::components::admin as admin_component;
-    let fee = admin_component::get_fee(env, &invoice.token);
+    if amount <= 0 || invoice.amount_refunded + amount > invoice.amount {
+        panic_with_error!(env, ContractError::InvalidAmount);
+    }
 
-    // Calculate amount to merchant
-    let merchant_amount = invoice.amount - fee;
+    let date_paid = invoice.date_paid.unwrap_or(0);
+    if env.ledger().timestamp() - date_paid > 604800 {
+        panic_with_error!(env, ContractError::RefundWindowExpired);
+    }
 
-    // Get merchant info to verify it exists
-    let merchant = merchant::get_merchant(env, invoice.merchant_id);
+    let payer = invoice.payer.clone().unwrap();
 
-    // Transfer tokens from contract to merchant account
-    let contract_address = env.current_contract_address();
-    let token_client = token::Client::new(env, &invoice.token);
+    let token = token::Client::new(env, &invoice.token);
+    token.transfer(&merchant_address, &payer, &amount);
 
-    token_client.transfer(&contract_address, &merchant.address, &merchant_amount);
-
-    // Update invoice status
-    invoice.status = InvoiceStatus::Paid;
-    invoice.payer = Some(admin_or_manager.clone());
-    invoice.date_paid = Some(env.ledger().timestamp());
+    invoice.amount_refunded += amount;
+    if invoice.amount_refunded == invoice.amount {
+        invoice.status = InvoiceStatus::Refunded;
+    } else {
+        invoice.status = InvoiceStatus::PartiallyRefunded;
+    }
 
     env.storage()
         .persistent()
         .set(&DataKey::Invoice(invoice_id), &invoice);
 
-    // Publish paid event
-    events::publish_invoice_paid_event(
+    events::publish_invoice_partially_refunded_event(
         env,
         invoice_id,
-        invoice.merchant_id,
-        admin_or_manager.clone(),
-        invoice.amount,
-        fee,
-        invoice.token.clone(),
+        merchant_address,
+        amount,
+        invoice.amount_refunded,
         env.ledger().timestamp(),
     );
+}
 
-    invoice
+pub fn refund_invoice(env: &Env, invoice_id: u64) {
+    let invoice = get_invoice(env, invoice_id);
+    let amount_to_refund = invoice.amount - invoice.amount_refunded;
+    if amount_to_refund > 0 {
+        refund_invoice_partial(env, invoice_id, amount_to_refund);
+    } else {
+        panic_with_error!(env, ContractError::InvalidAmount);
+    }
 }
