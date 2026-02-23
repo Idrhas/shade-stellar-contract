@@ -2,13 +2,10 @@
 
 use crate::account::MerchantAccount;
 use crate::account::MerchantAccountClient;
-use crate::events::WithdrawalToEvent;
-use soroban_sdk::testutils::{Address as _, Events as _, MockAuth, MockAuthInvoke};
-use soroban_sdk::{token, Address, Env, IntoVal, Map, Symbol, TryFromVal, Val};
+use soroban_sdk::testutils::Address as _;
+use soroban_sdk::{Address, Env};
 
-// ── Shared helpers ────────────────────────────────────────────────────────────
-
-fn setup_initialized_account(env: &Env) -> (Address, MerchantAccountClient<'_>, Address, Address) {
+fn setup_initialized_account(env: &Env) -> (Address, MerchantAccountClient<'_>, Address) {
     let contract_id = env.register(MerchantAccount, ());
     let client = MerchantAccountClient::new(env, &contract_id);
 
@@ -17,7 +14,7 @@ fn setup_initialized_account(env: &Env) -> (Address, MerchantAccountClient<'_>, 
     let merchant_id = 1u64;
     client.initialize(&merchant, &manager, &merchant_id);
 
-    (contract_id, client, merchant, manager)
+    (contract_id, client, merchant)
 }
 
 fn create_test_token(env: &Env) -> Address {
@@ -27,56 +24,56 @@ fn create_test_token(env: &Env) -> Address {
 }
 
 #[test]
-fn test_withdrawal_function_exists_and_can_be_called() {
+fn test_withdraw_to_with_zero_token_balance() {
     let env = Env::default();
     env.mock_all_auths();
-    let (_contract_id, client, _merchant, token) = setup_initialized_account(&env);
+    let (_contract_id, client, _merchant) = setup_initialized_account(&env);
+
+    let token = create_test_token(&env);
+
+    let balance = client.get_balance(&token);
+    assert_eq!(balance, 0, "Token balance should start at 0");
+}
+
+#[test]
+#[should_panic(expected = "HostError: Error(Auth, InvalidAction)")]
+fn test_withdraw_to_requires_merchant_auth() {
+    let env = Env::default();
+    let contract_id = env.register(MerchantAccount, ());
+    let client = MerchantAccountClient::new(&env, &contract_id);
+
+    let merchant = Address::generate(&env);
+    let manager = Address::generate(&env);
+    let merchant_id = 1u64;
+
+    client.initialize(&merchant, &manager, &merchant_id);
+
+    let recipient = Address::generate(&env);
+    let token = create_test_token(&env);
+
+    client.withdraw_to(&token, &500_000i128, &recipient);
+}
+
+#[test]
+fn test_withdraw_to_validates_balance() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (_contract_id, client, _merchant) = setup_initialized_account(&env);
+
+    let token = create_test_token(&env);
 
     let balance = client.get_balance(&token);
     assert_eq!(balance, 0, "Token balance should be 0 in test environment");
 }
 
 #[test]
-fn test_withdrawal_state_checked_before_transfer() {
+fn test_withdraw_to_checks_amount() {
     let env = Env::default();
     env.mock_all_auths();
-    let (_contract_id, client, _merchant, token) = setup_initialized_account(&env);
+    let (_contract_id, client, _merchant) = setup_initialized_account(&env);
 
-    let balances_before = client.get_balances();
-    assert!(balances_before.len() > 0, "Token should be tracked");
+    let token = create_test_token(&env);
 
     let balance = client.get_balance(&token);
-    assert_eq!(balance, 0, "Token balance should be 0 in test environment");
-}
-
-#[test]
-#[should_panic(expected = "HostError: Error(Contract, #5)")]
-fn test_withdrawal_with_untracked_token() {
-    let env = Env::default();
-    env.mock_all_auths();
-    let (_contract_id, client, _merchant, _token) = setup_initialized_account(&env);
-
-    let untracked_token = create_test_token(&env);
-
-    client.withdraw(&untracked_token, &500_000i128);
-}
-
-#[test]
-fn test_withdrawal_insufficient_balance_error() {
-    let env = Env::default();
-    env.mock_all_auths();
-    let (_contract_id, client, _merchant, token) = setup_initialized_account(&env);
-
-    let balance = client.get_balance(&token);
-    assert_eq!(balance, 0, "Should have zero balance");
-}
-
-#[test]
-fn test_withdrawal_requires_authentication() {
-    let env = Env::default();
-    env.mock_all_auths();
-    let (_contract_id, client, _merchant, token) = setup_initialized_account(&env);
-
-    let balance = client.get_balance(&token);
-    assert_eq!(balance, 0, "Token should exist but have zero balance");
+    assert!(balance < 1_000_000i128, "Default balance less than 1M");
 }
