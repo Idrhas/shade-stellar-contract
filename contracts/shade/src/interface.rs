@@ -26,6 +26,7 @@ pub trait ShadeTrait {
         token: Address,
     ) -> u64;
     fn get_invoice(env: Env, invoice_id: u64) -> Invoice;
+    fn refund_invoice(env: Env, merchant: Address, invoice_id: u64);
     fn set_merchant_key(env: Env, merchant: Address, key: BytesN<32>);
     fn get_merchant_key(env: Env, merchant: Address) -> BytesN<32>;
     fn grant_role(env: Env, admin: Address, user: Address, role: Role);
@@ -33,7 +34,6 @@ pub trait ShadeTrait {
     fn has_role(env: Env, user: Address, role: Role) -> bool;
     fn get_invoices(env: Env, filter: InvoiceFilter) -> Vec<Invoice>;
     fn refund_invoice_partial(env: Env, invoice_id: u64, amount: i128);
-    fn refund_invoice(env: Env, invoice_id: u64);
     fn pause(env: Env, admin: Address);
     fn unpause(env: Env, admin: Address);
     fn is_paused(env: Env) -> bool;

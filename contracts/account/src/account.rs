@@ -1,4 +1,5 @@
 use crate::errors::ContractError;
+use crate::events::publish_withdrawal_to_event;
 use crate::events::{
     publish_account_initialized_event, publish_account_verified_event,
     publish_refund_processed_event, publish_token_added_event, publish_withdrawal_event,
@@ -6,7 +7,6 @@ use crate::events::{
 use crate::interface::MerchantAccountTrait;
 use crate::types::{AccountInfo, DataKey, TokenBalance};
 use soroban_sdk::{contract, contractimpl, panic_with_error, token, Address, Env, Vec};
-use crate::events::publish_withdrawal_to_event;
 
 #[contract]
 pub struct MerchantAccount;
@@ -153,29 +153,23 @@ impl MerchantAccountTrait for MerchantAccount {
             .unwrap_or(false)
     }
     fn withdraw_to(env: Env, token: Address, amount: i128, recipient: Address) {
-    // Only the merchant can initiate withdrawals to another account
-    let merchant: Address = env
-        .storage()
-        .persistent()
-        .get(&DataKey::Merchant)
-        .unwrap_or_else(|| panic_with_error!(&env, ContractError::NotInitialized));
-    merchant.require_auth();
+        // Only the merchant can initiate withdrawals to another account
+        let merchant: Address = env
+            .storage()
+            .persistent()
+            .get(&DataKey::Merchant)
+            .unwrap_or_else(|| panic_with_error!(&env, ContractError::NotInitialized));
+        merchant.require_auth();
 
-    let token_client = token::TokenClient::new(&env, &token);
-    let current_balance = token_client.balance(&env.current_contract_address());
+        let token_client = token::TokenClient::new(&env, &token);
+        let current_balance = token_client.balance(&env.current_contract_address());
 
-    if amount > current_balance {
-        panic_with_error!(&env, ContractError::InsufficientBalance);
+        if amount > current_balance {
+            panic_with_error!(&env, ContractError::InsufficientBalance);
+        }
+
+        token_client.transfer(&env.current_contract_address(), &recipient, &amount);
+
+        publish_withdrawal_to_event(&env, token, recipient, amount, env.ledger().timestamp());
     }
-
-    token_client.transfer(&env.current_contract_address(), &recipient, &amount);
-
-    publish_withdrawal_to_event(
-        &env,
-        token,
-        recipient,
-        amount,
-        env.ledger().timestamp(),
-    );
-}
 }

@@ -204,7 +204,7 @@ fn test_refund_transfers_tokens_and_emits_event() {
 }
 
 #[test]
-#[should_panic(expected = "HostError: Error(Contract, #3)")]
+#[should_panic(expected = "HostError: Error(Contract, #5)")]
 fn test_refund_panics_when_account_is_restricted() {
     let env = Env::default();
     env.mock_all_auths();

@@ -103,6 +103,11 @@ impl ShadeTrait for Shade {
         invoice_component::get_invoice(&env, invoice_id)
     }
 
+    fn refund_invoice(env: Env, merchant: Address, invoice_id: u64) {
+        pausable_component::assert_not_paused(&env);
+        invoice_component::refund_invoice(&env, &merchant, invoice_id);
+    }
+
     fn set_merchant_key(env: Env, merchant: Address, key: BytesN<32>) {
         merchant_component::set_merchant_key(&env, &merchant, &key);
     }
@@ -130,11 +135,6 @@ impl ShadeTrait for Shade {
     fn refund_invoice_partial(env: Env, invoice_id: u64, amount: i128) {
         pausable_component::assert_not_paused(&env);
         invoice_component::refund_invoice_partial(&env, invoice_id, amount);
-    }
-
-    fn refund_invoice(env: Env, invoice_id: u64) {
-        pausable_component::assert_not_paused(&env);
-        invoice_component::refund_invoice(&env, invoice_id);
     }
 
     fn pause(env: Env, admin: Address) {

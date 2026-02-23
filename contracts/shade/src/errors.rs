@@ -16,6 +16,7 @@ pub enum ContractError {
     ContractNotPaused = 10,
     MerchantKeyNotFound = 11,
     TokenNotAccepted = 12,
-    InvalidInvoiceStatus = 13,
-    RefundWindowExpired = 14,
+    MerchantAccountNotFound = 13,
+    InvalidInvoiceStatus = 14,
+    RefundPeriodExpired = 15,
 }
