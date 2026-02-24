@@ -298,6 +298,24 @@ pub fn publish_contract_upgraded_event(env: &Env, new_wasm_hash: BytesN<32>, tim
 }
 
 #[contractevent]
+pub struct AccountRestrictedEvent {
+    pub merchant: Address,
+    pub status: bool,
+    pub caller: Address,
+    pub timestamp: u64,
+}
+
+pub fn publish_account_restricted_event(
+    env: &Env,
+    merchant: Address,
+    status: bool,
+    caller: Address,
+    timestamp: u64,
+) {
+    AccountRestrictedEvent {
+        merchant,
+        status,
+        caller,
 pub struct InvoicePaidEvent {
     pub invoice_id: u64,
     pub merchant_id: u64,
