@@ -435,6 +435,181 @@ fn test_void_non_existent_invoice() {
     client.void_invoice(&merchant, &999);
 }
 
+// Invoice Amendment Tests
+
+#[test]
+fn test_amend_invoice_amount_success() {
+    let (env, client, _contract_id, _admin) = setup_test();
+
+    let merchant = Address::generate(&env);
+    client.register_merchant(&merchant);
+
+    let token = Address::generate(&env);
+    let description = String::from_str(&env, "Original Invoice");
+    let invoice_id = client.create_invoice(&merchant, &description, &1000, &token);
+
+    // Amend the amount
+    client.amend_invoice(&merchant, &invoice_id, &Some(2000), &None);
+
+    // Verify amount was updated
+    let invoice_after = client.get_invoice(&invoice_id);
+    assert_eq!(invoice_after.amount, 2000);
+    assert_eq!(invoice_after.description, description);
+    assert_eq!(invoice_after.status, InvoiceStatus::Pending);
+}
+
+#[test]
+fn test_amend_invoice_description_success() {
+    let (env, client, _contract_id, _admin) = setup_test();
+
+    let merchant = Address::generate(&env);
+    client.register_merchant(&merchant);
+
+    let token = Address::generate(&env);
+    let description = String::from_str(&env, "Original Description");
+    let invoice_id = client.create_invoice(&merchant, &description, &1000, &token);
+
+    // Amend the description
+    let new_description = String::from_str(&env, "Updated Description");
+    client.amend_invoice(&merchant, &invoice_id, &None, &Some(new_description.clone()));
+
+    // Verify description was updated
+    let invoice_after = client.get_invoice(&invoice_id);
+    assert_eq!(invoice_after.amount, 1000);
+    assert_eq!(invoice_after.description, new_description);
+    assert_eq!(invoice_after.status, InvoiceStatus::Pending);
+}
+
+#[test]
+fn test_amend_invoice_both_fields_success() {
+    let (env, client, _contract_id, _admin) = setup_test();
+
+    let merchant = Address::generate(&env);
+    client.register_merchant(&merchant);
+
+    let token = Address::generate(&env);
+    let description = String::from_str(&env, "Original");
+    let invoice_id = client.create_invoice(&merchant, &description, &1000, &token);
+
+    // Amend both amount and description
+    let new_description = String::from_str(&env, "Updated");
+    client.amend_invoice(&merchant, &invoice_id, &Some(3000), &Some(new_description.clone()));
+
+    // Verify both fields were updated
+    let invoice_after = client.get_invoice(&invoice_id);
+    assert_eq!(invoice_after.amount, 3000);
+    assert_eq!(invoice_after.description, new_description);
+}
+
+#[test]
+#[should_panic(expected = "HostError: Error(Contract, #14)")]
+fn test_amend_invoice_paid_fails() {
+    let (env, client, _contract_id, admin, token) = setup_test_with_payment();
+
+    // Register merchant
+    let merchant = Address::generate(&env);
+    client.register_merchant(&merchant);
+
+    // Create merchant account
+    let merchant_account = Address::generate(&env);
+    client.set_merchant_account(&merchant, &merchant_account);
+
+    // Create and pay invoice
+    let description = String::from_str(&env, "Test Invoice");
+    let invoice_id = client.create_invoice(&merchant, &description, &1000, &token);
+
+    let customer = Address::generate(&env);
+    let token_client = token::StellarAssetClient::new(&env, &token);
+    token_client.mint(&customer, &1000);
+
+    client.pay_invoice(&customer, &invoice_id);
+
+    // Try to amend paid invoice (should panic with InvalidInvoiceStatus)
+    let new_description = String::from_str(&env, "Updated");
+    client.amend_invoice(&merchant, &invoice_id, &Some(2000), &Some(new_description));
+}
+
+#[test]
+#[should_panic(expected = "HostError: Error(Contract, #14)")]
+fn test_amend_invoice_cancelled_fails() {
+    let (env, client, _contract_id, _admin) = setup_test();
+
+    let merchant = Address::generate(&env);
+    client.register_merchant(&merchant);
+
+    let token = Address::generate(&env);
+    let description = String::from_str(&env, "Test Invoice");
+    let invoice_id = client.create_invoice(&merchant, &description, &1000, &token);
+
+    // Void the invoice
+    client.void_invoice(&merchant, &invoice_id);
+
+    // Try to amend cancelled invoice (should panic with InvalidInvoiceStatus)
+    client.amend_invoice(&merchant, &invoice_id, &Some(2000), &None);
+}
+
+#[test]
+#[should_panic(expected = "HostError: Error(Contract, #1)")]
+fn test_amend_invoice_non_owner_fails() {
+    let (env, client, _contract_id, _admin) = setup_test();
+
+    let merchant = Address::generate(&env);
+    client.register_merchant(&merchant);
+
+    let token = Address::generate(&env);
+    let description = String::from_str(&env, "Test Invoice");
+    let invoice_id = client.create_invoice(&merchant, &description, &1000, &token);
+
+    // Try to amend with different merchant (should panic with NotAuthorized)
+    let other_merchant = Address::generate(&env);
+    client.register_merchant(&other_merchant);
+    client.amend_invoice(&other_merchant, &invoice_id, &Some(2000), &None);
+}
+
+#[test]
+#[should_panic(expected = "HostError: Error(Contract, #7)")]
+fn test_amend_invoice_invalid_amount_fails() {
+    let (env, client, _contract_id, _admin) = setup_test();
+
+    let merchant = Address::generate(&env);
+    client.register_merchant(&merchant);
+
+    let token = Address::generate(&env);
+    let description = String::from_str(&env, "Test Invoice");
+    let invoice_id = client.create_invoice(&merchant, &description, &1000, &token);
+
+    // Try to amend with invalid amount (should panic with InvalidAmount)
+    client.amend_invoice(&merchant, &invoice_id, &Some(0), &None);
+}
+
+#[test]
+#[should_panic(expected = "HostError: Error(Contract, #7)")]
+fn test_amend_invoice_negative_amount_fails() {
+    let (env, client, _contract_id, _admin) = setup_test();
+
+    let merchant = Address::generate(&env);
+    client.register_merchant(&merchant);
+
+    let token = Address::generate(&env);
+    let description = String::from_str(&env, "Test Invoice");
+    let invoice_id = client.create_invoice(&merchant, &description, &1000, &token);
+
+    // Try to amend with negative amount (should panic with InvalidAmount)
+    client.amend_invoice(&merchant, &invoice_id, &Some(-100), &None);
+}
+
+#[test]
+#[should_panic(expected = "HostError: Error(Contract, #8)")]
+fn test_amend_non_existent_invoice_fails() {
+    let (env, client, _contract_id, _admin) = setup_test();
+
+    let merchant = Address::generate(&env);
+    client.register_merchant(&merchant);
+
+    // Try to amend non-existent invoice (should panic with InvoiceNotFound)
+    client.amend_invoice(&merchant, &999, &Some(2000), &None);
+}
+
 fn setup_test_with_payment() -> (Env, ShadeClient<'static>, Address, Address, Address) {
     let env = Env::default();
     env.mock_all_auths();
