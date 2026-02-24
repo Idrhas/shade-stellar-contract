@@ -87,3 +87,13 @@ pub fn publish_refund_processed_event(
     }
     .publish(env);
 }
+
+#[contractevent]
+pub struct AccountRestricted {
+    pub status: bool,
+    pub timestamp: u64,
+}
+
+pub fn publish_account_restricted_event(env: &Env, status: bool, timestamp: u64) {
+    AccountRestricted { status, timestamp }.publish(env);
+}
