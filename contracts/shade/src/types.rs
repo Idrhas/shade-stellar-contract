@@ -15,11 +15,13 @@ pub enum DataKey {
     TokenFee(Address),
     MerchantTokens,
     MerchantBalance(Address),
+    MerchantAccount(u64),
     Invoice(u64),
     InvoiceCount,
     ReentrancyStatus,
+    AccountWasmHash,
     Role(Address, Role),
-    UsedNonce(Address, BytesN<32>), 
+    UsedNonce(Address, BytesN<32>),
 }
 
 #[contracttype]
@@ -51,6 +53,7 @@ pub struct Invoice {
     pub payer: Option<Address>,
     pub date_created: u64,
     pub date_paid: Option<u64>,
+    pub amount_refunded: i128,
 }
 
 #[contracttype]
@@ -61,6 +64,7 @@ pub enum InvoiceStatus {
     Paid = 1,
     Cancelled = 2,
     Refunded = 3,
+    PartiallyRefunded = 4,
 }
 
 #[contracttype]
@@ -77,6 +81,8 @@ pub struct InvoiceFilter {
     pub merchant: Option<Address>,
     pub min_amount: Option<u128>,
     pub max_amount: Option<u128>,
+    pub start_date: Option<u64>,
+    pub end_date: Option<u64>,
 }
 
 #[contracttype]

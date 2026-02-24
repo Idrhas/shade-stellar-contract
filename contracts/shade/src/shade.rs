@@ -38,6 +38,11 @@ impl ShadeTrait for Shade {
         admin_component::add_accepted_token(&env, &admin, &token);
     }
 
+    fn add_accepted_tokens(env: Env, admin: Address, tokens: Vec<Address>) {
+        pausable_component::assert_not_paused(&env);
+        admin_component::add_accepted_tokens(&env, &admin, &tokens);
+    }
+
     fn remove_accepted_token(env: Env, admin: Address, token: Address) {
         pausable_component::assert_not_paused(&env);
         admin_component::remove_accepted_token(&env, &admin, &token);
@@ -45,6 +50,10 @@ impl ShadeTrait for Shade {
 
     fn is_accepted_token(env: Env, token: Address) -> bool {
         admin_component::is_accepted_token(&env, &token)
+    }
+
+    fn set_account_wasm_hash(env: Env, admin: Address, wasm_hash: soroban_sdk::BytesN<32>) {
+        admin_component::set_account_wasm_hash(&env, &admin, &wasm_hash);
     }
 
     fn set_fee(env: Env, admin: Address, token: Address, fee: i128) {
@@ -127,6 +136,11 @@ impl ShadeTrait for Shade {
         invoice_component::get_invoice(&env, invoice_id)
     }
 
+    fn refund_invoice(env: Env, merchant: Address, invoice_id: u64) {
+        pausable_component::assert_not_paused(&env);
+        invoice_component::refund_invoice(&env, &merchant, invoice_id);
+    }
+
     fn set_merchant_key(env: Env, merchant: Address, key: BytesN<32>) {
         merchant_component::set_merchant_key(&env, &merchant, &key);
     }
@@ -151,6 +165,11 @@ impl ShadeTrait for Shade {
         invoice_component::get_invoices(&env, filter)
     }
 
+    fn refund_invoice_partial(env: Env, invoice_id: u64, amount: i128) {
+        pausable_component::assert_not_paused(&env);
+        invoice_component::refund_invoice_partial(&env, invoice_id, amount);
+    }
+
     fn pause(env: Env, admin: Address) {
         pausable_component::pause(&env, &admin);
     }
@@ -165,5 +184,43 @@ impl ShadeTrait for Shade {
 
     fn upgrade(env: Env, new_wasm_hash: BytesN<32>) {
         upgrade_component::upgrade(&env, &new_wasm_hash);
+    }
+
+    fn restrict_merchant_account(
+        env: Env,
+        caller: Address,
+        merchant_address: Address,
+        status: bool,
+    ) {
+        merchant_component::restrict_merchant_account(&env, &caller, &merchant_address, status);
+    }
+
+    fn set_merchant_account(env: Env, merchant: Address, account: Address) {
+        merchant_component::set_merchant_account(&env, &merchant, &account);
+    }
+
+    fn get_merchant_account(env: Env, merchant_id: u64) -> Address {
+        merchant_component::get_merchant_account(&env, merchant_id)
+    }
+
+    fn pay_invoice(env: Env, payer: Address, invoice_id: u64) {
+        pausable_component::assert_not_paused(&env);
+        invoice_component::pay_invoice(&env, &payer, invoice_id);
+    }
+
+    fn void_invoice(env: Env, merchant: Address, invoice_id: u64) {
+        pausable_component::assert_not_paused(&env);
+        invoice_component::void_invoice(&env, &merchant, invoice_id);
+    }
+
+    fn amend_invoice(
+        env: Env,
+        merchant: Address,
+        invoice_id: u64,
+        new_amount: Option<i128>,
+        new_description: Option<String>,
+    ) {
+        pausable_component::assert_not_paused(&env);
+        invoice_component::amend_invoice(&env, &merchant, invoice_id, new_amount, new_description);
     }
 }

@@ -18,6 +18,28 @@ pub fn add_accepted_token(env: &Env, admin: &Address, token: &Address) {
             .set(&DataKey::AcceptedTokens, &accepted_tokens);
         events::publish_token_added_event(env, token.clone(), env.ledger().timestamp());
     }
+pub fn add_accepted_tokens(env: &Env, admin: &Address, tokens: &Vec<Address>) {
+    reentrancy::enter(env);
+    core::assert_admin(env, admin);
+
+    let mut accepted_tokens = get_accepted_tokens(env);
+    let mut changed = false;
+    let timestamp = env.ledger().timestamp();
+
+    for token in tokens.iter() {
+        let _ = token::Client::new(env, &token).symbol();
+        if !contains_token(&accepted_tokens, &token) {
+            accepted_tokens.push_back(token.clone());
+            events::publish_token_added_event(env, token.clone(), timestamp);
+            changed = true;
+        }
+    }
+
+    if changed {
+        env.storage()
+            .persistent()
+            .set(&DataKey::AcceptedTokens, &accepted_tokens);
+    }
     reentrancy::exit(env);
 }
 
@@ -48,6 +70,15 @@ pub fn remove_accepted_token(env: &Env, admin: &Address, token: &Address) {
 
 pub fn is_accepted_token(env: &Env, token: &Address) -> bool {
     contains_token(&get_accepted_tokens(env), token)
+}
+
+pub fn set_account_wasm_hash(env: &Env, admin: &Address, wasm_hash: &soroban_sdk::BytesN<32>) {
+    reentrancy::enter(env);
+    core::assert_admin(env, admin);
+    env.storage()
+        .persistent()
+        .set(&DataKey::AccountWasmHash, wasm_hash);
+    reentrancy::exit(env);
 }
 
 pub fn set_fee(env: &Env, admin: &Address, token: &Address, fee: i128) {

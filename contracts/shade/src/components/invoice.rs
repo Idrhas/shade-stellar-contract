@@ -1,8 +1,11 @@
-use crate::components::{access_control, merchant, signature_util};
+use crate::components::{access_control, admin, merchant, signature_util};
 use crate::errors::ContractError;
 use crate::events;
 use crate::types::{DataKey, Invoice, InvoiceFilter, InvoiceStatus, Role};
-use soroban_sdk::{panic_with_error, Address, BytesN, Env, String, Vec};
+use account::account::MerchantAccountClient;
+use soroban_sdk::{panic_with_error, token, Address, BytesN, Env, String, Vec};
+
+pub const MAX_REFUND_DURATION: u64 = 604_800;
 
 pub fn create_invoice(
     env: &Env,
@@ -39,6 +42,7 @@ pub fn create_invoice(
         payer: None,
         date_created: env.ledger().timestamp(),
         date_paid: None,
+        amount_refunded: 0,
     };
     env.storage()
         .persistent()
@@ -123,6 +127,7 @@ pub fn create_invoice_signed(
         payer: None,
         date_created: env.ledger().timestamp(),
         date_paid: None,
+        amount_refunded: 0,
     };
 
     env.storage()
@@ -149,6 +154,29 @@ pub fn get_invoice(env: &Env, invoice_id: u64) -> Invoice {
         .persistent()
         .get(&DataKey::Invoice(invoice_id))
         .unwrap_or_else(|| panic_with_error!(env, ContractError::InvoiceNotFound))
+}
+
+pub fn refund_invoice(env: &Env, merchant_address: &Address, invoice_id: u64) {
+    merchant_address.require_auth();
+
+    let invoice = get_invoice(env, invoice_id);
+
+    let merchant_id: u64 = env
+        .storage()
+        .persistent()
+        .get(&DataKey::MerchantId(merchant_address.clone()))
+        .unwrap_or_else(|| panic_with_error!(env, ContractError::NotAuthorized));
+
+    if invoice.merchant_id != merchant_id {
+        panic_with_error!(env, ContractError::NotAuthorized);
+    }
+
+    let amount_to_refund = invoice.amount - invoice.amount_refunded;
+    if amount_to_refund <= 0 {
+        panic_with_error!(env, ContractError::InvalidAmount);
+    }
+
+    refund_invoice_partial(env, invoice_id, amount_to_refund);
 }
 
 pub fn get_invoices(env: &Env, filter: InvoiceFilter) -> Vec<Invoice> {
@@ -193,10 +221,10 @@ pub fn get_invoices(env: &Env, filter: InvoiceFilter) -> Vec<Invoice> {
                     matches = false;
                 }
             }
-            if matches {
-                invoices.push_back(invoice);
+            if let Some(start_date) = filter.start_date {
+                if invoice.date_created < start_date {
+                    matches = false;
+                }
             }
-        }
-    }
-    invoices
-}
+            if let Some(end_date) = filter.end_date {
+    
