@@ -261,6 +261,17 @@ pub fn refund_invoice_partial(env: &Env, invoice_id: u64, amount: i128) {
         panic_with_error!(env, ContractError::InvalidInvoiceStatus);
     }
 
+    if let Some(date_paid) = invoice.date_paid {
+        let elapsed = env.ledger().timestamp() - date_paid;
+        if elapsed > MAX_REFUND_DURATION {
+            panic_with_error!(env, ContractError::RefundPeriodExpired);
+        }
+    }
+
+    if amount <= 0 {
+        panic_with_error!(env, ContractError::InvalidAmount);
+    }
+
     let total_refund = invoice.amount_refunded + amount;
     if total_refund > invoice.amount {
         panic_with_error!(env, ContractError::InvalidAmount);
