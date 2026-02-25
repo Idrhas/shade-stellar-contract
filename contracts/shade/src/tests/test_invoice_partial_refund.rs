@@ -21,7 +21,8 @@ fn setup_test() -> (Env, ShadeClient<'static>, Address, Address) {
 
 fn create_test_token(env: &Env) -> Address {
     let token_admin = Address::generate(env);
-    env.register_stellar_asset_contract_v2(token_admin).address()
+    env.register_stellar_asset_contract_v2(token_admin)
+        .address()
 }
 
 #[allow(clippy::too_many_arguments)]
