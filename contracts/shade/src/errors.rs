@@ -24,4 +24,10 @@ pub enum ContractError {
     WasmHashNotSet = 18,
     InvoiceAlreadyPaid = 19,
     MerchantAccountNotSet = 20,
+    InvalidInterval = 21,
+    PlanNotFound = 22,
+    PlanNotActive = 23,
+    SubscriptionNotFound = 24,
+    SubscriptionNotActive = 25,
+    ChargeTooEarly = 26,
 }

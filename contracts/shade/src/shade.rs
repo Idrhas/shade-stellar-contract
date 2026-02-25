@@ -1,12 +1,15 @@
 use crate::components::{
     access_control as access_control_component, admin as admin_component, core as core_component,
     invoice as invoice_component, merchant as merchant_component, pausable as pausable_component,
-    upgrade as upgrade_component,
+    subscription as subscription_component, upgrade as upgrade_component,
 };
 use crate::errors::ContractError;
 use crate::events;
 use crate::interface::ShadeTrait;
-use crate::types::{ContractInfo, DataKey, Invoice, InvoiceFilter, Merchant, MerchantFilter, Role};
+use crate::types::{
+    ContractInfo, DataKey, Invoice, InvoiceFilter, Merchant, MerchantFilter, Role, Subscription,
+    SubscriptionPlan,
+};
 use soroban_sdk::{contract, contractimpl, panic_with_error, Address, BytesN, Env, String, Vec};
 
 #[contract]
@@ -223,5 +226,42 @@ impl ShadeTrait for Shade {
     ) {
         pausable_component::assert_not_paused(&env);
         invoice_component::amend_invoice(&env, &merchant, invoice_id, new_amount, new_description);
+    }
+
+    // ---- Subscription Engine ----
+
+    fn create_plan(
+        env: Env,
+        merchant: Address,
+        description: String,
+        amount: i128,
+        token: Address,
+        interval: u64,
+    ) -> u64 {
+        pausable_component::assert_not_paused(&env);
+        subscription_component::create_plan(&env, &merchant, &description, amount, &token, interval)
+    }
+
+    fn subscribe(env: Env, customer: Address, plan_id: u64) -> u64 {
+        pausable_component::assert_not_paused(&env);
+        subscription_component::subscribe(&env, &customer, plan_id)
+    }
+
+    fn charge_subscription(env: Env, subscription_id: u64) {
+        pausable_component::assert_not_paused(&env);
+        subscription_component::charge_subscription(&env, subscription_id);
+    }
+
+    fn cancel_subscription(env: Env, caller: Address, subscription_id: u64) {
+        pausable_component::assert_not_paused(&env);
+        subscription_component::cancel_subscription(&env, &caller, subscription_id);
+    }
+
+    fn get_plan(env: Env, plan_id: u64) -> SubscriptionPlan {
+        subscription_component::get_plan(&env, plan_id)
+    }
+
+    fn get_subscription(env: Env, subscription_id: u64) -> Subscription {
+        subscription_component::get_subscription(&env, subscription_id)
     }
 }
