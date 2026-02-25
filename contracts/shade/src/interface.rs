@@ -1,4 +1,6 @@
-use crate::types::{Invoice, InvoiceFilter, Merchant, MerchantFilter, Role};
+use crate::types::{
+    Invoice, InvoiceFilter, Merchant, MerchantFilter, Role, Subscription, SubscriptionPlan,
+};
 use soroban_sdk::{contracttrait, Address, BytesN, Env, String, Vec};
 
 #[contracttrait]
@@ -27,6 +29,7 @@ pub trait ShadeTrait {
         amount: i128,
         token: Address,
     ) -> u64;
+    #[allow(clippy::too_many_arguments)]
     fn create_invoice_signed(
         env: Env,
         caller: Address,
@@ -67,4 +70,19 @@ pub trait ShadeTrait {
         new_amount: Option<i128>,
         new_description: Option<String>,
     );
+
+    // Subscription methods
+    fn create_plan(
+        env: Env,
+        merchant: Address,
+        description: String,
+        amount: i128,
+        token: Address,
+        interval: u64,
+    ) -> u64;
+    fn subscribe(env: Env, customer: Address, plan_id: u64) -> u64;
+    fn charge_subscription(env: Env, subscription_id: u64);
+    fn cancel_subscription(env: Env, caller: Address, subscription_id: u64);
+    fn get_plan(env: Env, plan_id: u64) -> SubscriptionPlan;
+    fn get_subscription(env: Env, subscription_id: u64) -> Subscription;
 }

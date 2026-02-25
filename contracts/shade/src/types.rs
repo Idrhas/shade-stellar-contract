@@ -22,6 +22,10 @@ pub enum DataKey {
     AccountWasmHash,
     Role(Address, Role),
     UsedNonce(Address, BytesN<32>),
+    Plan(u64),
+    PlanCount,
+    Subscription(u64),
+    SubscriptionCount,
 }
 
 #[contracttype]
@@ -91,4 +95,36 @@ pub enum Role {
     Admin,
     Manager,
     Operator,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SubscriptionPlan {
+    pub id: u64,
+    pub merchant_id: u64,
+    pub description: soroban_sdk::String,
+    pub amount: i128,
+    pub token: Address,
+    pub interval: u64,
+    pub active: bool,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Subscription {
+    pub id: u64,
+    pub plan_id: u64,
+    pub customer: Address,
+    pub merchant_id: u64,
+    pub status: SubscriptionStatus,
+    pub date_created: u64,
+    pub last_charged: u64,
+}
+
+#[contracttype]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[repr(u32)]
+pub enum SubscriptionStatus {
+    Active = 0,
+    Cancelled = 1,
 }
