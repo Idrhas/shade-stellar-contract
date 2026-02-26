@@ -295,8 +295,13 @@ fn test_payment_token_not_accepted() {
     let unaccepted_token = env.register_stellar_asset_contract_v2(unaccepted_token_admin.clone());
 
     let description = String::from_str(&env, "Test Invoice");
-    let invoice_id =
-        shade_client.create_invoice(&merchant, &description, &1000, &unaccepted_token.address(), &None);
+    let invoice_id = shade_client.create_invoice(
+        &merchant,
+        &description,
+        &1000,
+        &unaccepted_token.address(),
+        &None,
+    );
 
     // Create customer and mint tokens
     let customer = Address::generate(&env);

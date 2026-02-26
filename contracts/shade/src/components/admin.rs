@@ -126,9 +126,7 @@ pub fn accept_admin_transfer(env: &Env, new_admin: &Address) {
         panic_with_error!(env, ContractError::NotAuthorized);
     }
 
-    env.storage()
-        .persistent()
-        .set(&DataKey::Admin, new_admin);
+    env.storage().persistent().set(&DataKey::Admin, new_admin);
     env.storage().persistent().remove(&DataKey::PendingAdmin);
 }
 

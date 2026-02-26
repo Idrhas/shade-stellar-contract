@@ -4,7 +4,8 @@ use crate::shade::{Shade, ShadeClient};
 use soroban_sdk::testutils::{Address as _, Events as _};
 use soroban_sdk::{Address, BytesN, Env, Map, Symbol, TryIntoVal, Val, Vec};
 
-const ACCOUNT_WASM: &[u8] = include_bytes!("../../../../target/wasm32-unknown-unknown/release/account.wasm");
+const ACCOUNT_WASM: &[u8] =
+    include_bytes!("../../../../target/wasm32-unknown-unknown/release/account.wasm");
 
 fn setup() -> (Env, ShadeClient<'static>, Address) {
     let env = Env::default();
@@ -71,16 +72,30 @@ fn test_deploy_account_in_isolation_and_initialize() {
         acct_client.initialize(&merchant, &contract_id, &1_u64);
         // publish event as the factory would (emit from Shade contract context)
         env.as_contract(&contract_id, || {
-            crate::events::publish_merchant_account_deployed_event(&env, merchant.clone(), acct_id.clone(), env.ledger().timestamp());
+            crate::events::publish_merchant_account_deployed_event(
+                &env,
+                merchant.clone(),
+                acct_id.clone(),
+                env.ledger().timestamp(),
+            );
         });
         acct_id
     };
 
-    assert_latest_merchant_account_deployed_event(&env, &contract_id, &merchant, &deployed, expected_timestamp);
+    assert_latest_merchant_account_deployed_event(
+        &env,
+        &contract_id,
+        &merchant,
+        &deployed,
+        expected_timestamp,
+    );
 
     // Verify the deployed account is initialized and returns the merchant
     let merchant_from_account: Address = env.as_contract(&deployed, || {
-        env.storage().persistent().get(&account::types::DataKey::Merchant).unwrap()
+        env.storage()
+            .persistent()
+            .get(&account::types::DataKey::Merchant)
+            .unwrap()
     });
     assert_eq!(merchant_from_account, merchant);
 }
@@ -102,7 +117,12 @@ fn test_register_merchant_integration_and_uniqueness() {
         let acct_client = account::account::MerchantAccountClient::new(&env, &acct_id);
         acct_client.initialize(&merchant_a, &contract_id, &1_u64);
         env.as_contract(&contract_id, || {
-            crate::events::publish_merchant_account_deployed_event(&env, merchant_a.clone(), acct_id.clone(), env.ledger().timestamp());
+            crate::events::publish_merchant_account_deployed_event(
+                &env,
+                merchant_a.clone(),
+                acct_id.clone(),
+                env.ledger().timestamp(),
+            );
         });
         acct_id
     };
@@ -112,7 +132,12 @@ fn test_register_merchant_integration_and_uniqueness() {
         let acct_client = account::account::MerchantAccountClient::new(&env, &acct_id);
         acct_client.initialize(&merchant_b, &contract_id, &2_u64);
         env.as_contract(&contract_id, || {
-            crate::events::publish_merchant_account_deployed_event(&env, merchant_b.clone(), acct_id.clone(), env.ledger().timestamp());
+            crate::events::publish_merchant_account_deployed_event(
+                &env,
+                merchant_b.clone(),
+                acct_id.clone(),
+                env.ledger().timestamp(),
+            );
         });
         acct_id
     };
@@ -132,10 +157,16 @@ fn test_register_merchant_integration_and_uniqueness() {
 
     // Verify deployed accounts are initialized correctly
     let mac_a_merchant: Address = env.as_contract(&deployed_a, || {
-        env.storage().persistent().get(&account::types::DataKey::Merchant).unwrap()
+        env.storage()
+            .persistent()
+            .get(&account::types::DataKey::Merchant)
+            .unwrap()
     });
     let mac_b_merchant: Address = env.as_contract(&deployed_b, || {
-        env.storage().persistent().get(&account::types::DataKey::Merchant).unwrap()
+        env.storage()
+            .persistent()
+            .get(&account::types::DataKey::Merchant)
+            .unwrap()
     });
     assert_eq!(mac_a_merchant, merchant_a);
     assert_eq!(mac_b_merchant, merchant_b);
