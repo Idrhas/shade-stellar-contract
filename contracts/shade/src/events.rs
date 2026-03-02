@@ -272,13 +272,15 @@ pub fn publish_contract_unpaused_event(env: &Env, admin: Address, timestamp: u64
 
 #[contractevent]
 pub struct FeeSetEvent {
+    pub admin: Address,
     pub token: Address,
     pub fee: i128,
     pub timestamp: u64,
 }
 
-pub fn publish_fee_set_event(env: &Env, token: Address, fee: i128, timestamp: u64) {
+pub fn publish_fee_set_event(env: &Env, admin: Address, token: Address, fee: i128, timestamp: u64) {
     FeeSetEvent {
+        admin,
         token,
         fee,
         timestamp,

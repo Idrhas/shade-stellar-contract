@@ -110,7 +110,13 @@ pub fn set_fee(env: &Env, admin: &Address, token: &Address, fee: i128) {
         .persistent()
         .set(&DataKey::TokenFee(token.clone()), &fee);
 
-    events::publish_fee_set_event(env, token.clone(), fee, env.ledger().timestamp());
+    events::publish_fee_set_event(
+        env,
+        admin.clone(),
+        token.clone(),
+        fee,
+        env.ledger().timestamp(),
+    );
     reentrancy::exit(env);
 }
 
