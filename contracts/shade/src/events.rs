@@ -579,3 +579,19 @@ pub fn publish_account_wasm_hash_set_event(
     }
     .publish(env);
 }
+
+#[contractevent]
+pub struct PlanDeactivatedEvent {
+    pub plan_id: u64,
+    pub merchant: Address,
+    pub timestamp: u64,
+}
+
+pub fn publish_plan_deactivated_event(env: &Env, plan_id: u64, merchant: Address, timestamp: u64) {
+    PlanDeactivatedEvent {
+        plan_id,
+        merchant,
+        timestamp,
+    }
+    .publish(env);
+}

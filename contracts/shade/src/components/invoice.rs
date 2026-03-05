@@ -438,7 +438,7 @@ pub fn pay_invoice_partial(env: &Env, payer: &Address, invoice_id: u64, amount: 
         panic_with_error!(env, ContractError::TokenNotAccepted);
     }
 
-    let fee_amount = get_fee_for_amount(env, &invoice.token, amount);
+    let fee_amount = admin::get_fee_for_amount(env, &invoice.token, amount);
     let merchant_amount = amount - fee_amount;
 
     let token_client = token::TokenClient::new(env, &invoice.token);
@@ -568,18 +568,4 @@ pub fn amend_invoice(
         invoice.amount,
         env.ledger().timestamp(),
     );
-}
-
-fn get_fee_for_amount(env: &Env, token: &Address, amount: i128) -> i128 {
-    let fee_bps: i128 = env
-        .storage()
-        .persistent()
-        .get(&DataKey::TokenFee(token.clone()))
-        .unwrap_or(0);
-
-    if fee_bps == 0 {
-        return 0;
-    }
-
-    (amount * fee_bps) / 10_000i128
 }

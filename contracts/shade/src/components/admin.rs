@@ -4,6 +4,8 @@ use crate::events;
 use crate::types::DataKey;
 use soroban_sdk::{panic_with_error, token, Address, Env, Vec};
 
+// TODO: create the functionality for withdrawing revenue by admin.
+
 pub fn add_accepted_token(env: &Env, admin: &Address, token: &Address) {
     reentrancy::enter(env);
     core::assert_admin(env, admin);
@@ -125,6 +127,14 @@ pub fn get_fee(env: &Env, token: &Address) -> i128 {
         .persistent()
         .get(&DataKey::TokenFee(token.clone()))
         .unwrap_or(0)
+}
+
+pub fn get_fee_for_amount(env: &Env, token: &Address, amount: i128) -> i128 {
+    let fee_bps: i128 = get_fee(env, token);
+    if fee_bps == 0 {
+        return 0;
+    }
+    (amount * fee_bps) / 10_000i128
 }
 
 pub fn propose_admin_transfer(env: &Env, admin: &Address, new_admin: &Address) {
