@@ -1,4 +1,5 @@
 use crate::components::access_control;
+use crate::components::admin as admin_component;
 use crate::components::core as core_component;
 use crate::errors::ContractError;
 use crate::events;
@@ -302,4 +303,55 @@ pub fn get_merchant_account(env: &Env, merchant_id: u64) -> Address {
         .persistent()
         .get(&DataKey::MerchantAccount(merchant_id))
         .unwrap_or_else(|| panic_with_error!(env, ContractError::MerchantAccountNotSet))
+}
+
+pub fn set_merchant_accepted_tokens(env: &Env, merchant: &Address, tokens: &Vec<Address>) {
+    merchant.require_auth();
+
+    if !is_merchant(env, merchant) {
+        panic_with_error!(env, ContractError::MerchantNotFound);
+    }
+
+    // Verify all tokens are globally accepted
+    for token in tokens.iter() {
+        if !admin_component::is_accepted_token(env, &token) {
+            panic_with_error!(env, ContractError::TokenNotAccepted);
+        }
+    }
+
+    env.storage()
+        .persistent()
+        .set(&DataKey::MerchantTokens(merchant.clone()), tokens);
+
+    events::publish_merchant_tokens_set_event(
+        env,
+        merchant.clone(),
+        tokens.clone(),
+        env.ledger().timestamp(),
+    );
+}
+
+pub fn get_merchant_accepted_tokens(env: &Env, merchant: &Address) -> Vec<Address> {
+    env.storage()
+        .persistent()
+        .get(&DataKey::MerchantTokens(merchant.clone()))
+        .unwrap_or_else(|| Vec::new(env))
+}
+
+pub fn is_token_accepted_for_merchant(env: &Env, merchant: &Address, token: &Address) -> bool {
+    let merchant_tokens = get_merchant_accepted_tokens(env, merchant);
+
+    // If merchant hasn't set any tokens, they accept all globally accepted tokens
+    if merchant_tokens.is_empty() {
+        return admin_component::is_accepted_token(env, token);
+    }
+
+    // Otherwise, check if it's in their specific list (which are already verified to be globally accepted)
+    for merchant_token in merchant_tokens.iter() {
+        if merchant_token == *token {
+            return true;
+        }
+    }
+
+    false
 }

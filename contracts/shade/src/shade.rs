@@ -285,4 +285,13 @@ impl ShadeTrait for Shade {
         pausable_component::assert_not_paused(&env);
         subscription_component::cancel_subscription(&env, caller, subscription_id);
     }
+
+    fn set_merchant_accepted_tokens(env: Env, merchant: Address, tokens: Vec<Address>) {
+        pausable_component::assert_not_paused(&env);
+        merchant_component::set_merchant_accepted_tokens(&env, &merchant, &tokens);
+    }
+
+    fn get_merchant_accepted_tokens(env: Env, merchant: Address) -> Vec<Address> {
+        merchant_component::get_merchant_accepted_tokens(&env, &merchant)
+    }
 }

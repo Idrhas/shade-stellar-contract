@@ -1,4 +1,4 @@
-use soroban_sdk::{contractevent, Address, BytesN, Env};
+use soroban_sdk::{contractevent, Address, BytesN, Env, Vec};
 
 // ── Existing events ───────────────────────────────────────────────────────────
 
@@ -591,6 +591,27 @@ pub fn publish_plan_deactivated_event(env: &Env, plan_id: u64, merchant: Address
     PlanDeactivatedEvent {
         plan_id,
         merchant,
+        timestamp,
+    }
+    .publish(env);
+}
+
+#[contractevent]
+pub struct MerchantTokensSetEvent {
+    pub merchant: Address,
+    pub tokens: Vec<Address>,
+    pub timestamp: u64,
+}
+
+pub fn publish_merchant_tokens_set_event(
+    env: &Env,
+    merchant: Address,
+    tokens: Vec<Address>,
+    timestamp: u64,
+) {
+    MerchantTokensSetEvent {
+        merchant,
+        tokens,
         timestamp,
     }
     .publish(env);

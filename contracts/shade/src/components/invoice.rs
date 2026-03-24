@@ -29,8 +29,14 @@ pub fn validate_invoice_creation(
     if !merchant::is_merchant(env, merchant_address) {
         panic_with_error!(env, ContractError::NotAuthorized);
     }
+    // First, check global whitelist
     if !admin::is_accepted_token(env, token) {
         panic_with_error!(env, ContractError::TokenNotAccepted);
+    }
+
+    // Second, check merchant specific whitelist
+    if !merchant::is_token_accepted_for_merchant(env, merchant_address, token) {
+        panic_with_error!(env, ContractError::TokenNotAcceptedByMerchant);
     }
     // check if expires_at is valid
     if let Some(expires_at) = expires_at {

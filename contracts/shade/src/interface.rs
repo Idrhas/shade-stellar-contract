@@ -73,6 +73,9 @@ pub trait ShadeTrait {
         new_description: Option<String>,
     );
 
+    fn set_merchant_accepted_tokens(env: Env, merchant: Address, tokens: Vec<Address>);
+    fn get_merchant_accepted_tokens(env: Env, merchant: Address) -> Vec<Address>;
+
     // ── Admin transfer (two-step handover) ───────────────────────────────────
 
     /// Step 1: Current admin proposes a new admin address.

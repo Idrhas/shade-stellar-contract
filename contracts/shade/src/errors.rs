@@ -37,4 +37,5 @@ pub enum ContractError {
     InsufficientAllowance = 31,
     MerchantNotActive = 32,
     InvalidDescription = 33,
+    TokenNotAcceptedByMerchant = 41,
 }
