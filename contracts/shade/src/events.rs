@@ -1,4 +1,6 @@
-use soroban_sdk::{contractevent, Address, BytesN, Env};
+use soroban_sdk::{contractevent, Address, BytesN, Env, Vec};
+
+// ── Existing events ───────────────────────────────────────────────────────────
 
 #[contractevent]
 pub struct InitalizedEvent {
@@ -9,6 +11,7 @@ pub struct InitalizedEvent {
 pub fn publish_initialized_event(env: &Env, admin: Address, timestamp: u64) {
     InitalizedEvent { admin, timestamp }.publish(env);
 }
+// no new changes to add
 
 #[contractevent]
 pub struct TokenAddedEvent {
@@ -46,6 +49,27 @@ pub fn publish_merchant_registered_event(
     MerchantRegisteredEvent {
         merchant,
         merchant_id,
+        timestamp,
+    }
+    .publish(env);
+}
+
+#[contractevent]
+pub struct MerchantAccountDeployedEvent {
+    pub merchant: Address,
+    pub contract: Address,
+    pub timestamp: u64,
+}
+
+pub fn publish_merchant_account_deployed_event(
+    env: &Env,
+    merchant: Address,
+    contract: Address,
+    timestamp: u64,
+) {
+    MerchantAccountDeployedEvent {
+        merchant,
+        contract,
         timestamp,
     }
     .publish(env);
@@ -97,6 +121,57 @@ pub fn publish_invoice_created_event(
 }
 
 #[contractevent]
+pub struct InvoiceRefundedEvent {
+    pub invoice_id: u64,
+    pub merchant: Address,
+    pub amount: i128,
+    pub timestamp: u64,
+}
+
+pub fn publish_invoice_refunded_event(
+    env: &Env,
+    invoice_id: u64,
+    merchant: Address,
+    amount: i128,
+    timestamp: u64,
+) {
+    InvoiceRefundedEvent {
+        invoice_id,
+        merchant,
+        amount,
+        timestamp,
+    }
+    .publish(env);
+}
+
+#[contractevent]
+pub struct InvoicePartiallyRefundedEvent {
+    pub invoice_id: u64,
+    pub merchant: Address,
+    pub amount: i128,
+    pub total_amount_refunded: i128,
+    pub timestamp: u64,
+}
+
+pub fn publish_invoice_partially_refunded_event(
+    env: &Env,
+    invoice_id: u64,
+    merchant: Address,
+    amount: i128,
+    total_amount_refunded: i128,
+    timestamp: u64,
+) {
+    InvoicePartiallyRefundedEvent {
+        invoice_id,
+        merchant,
+        amount,
+        total_amount_refunded,
+        timestamp,
+    }
+    .publish(env);
+}
+
+#[contractevent]
 pub struct MerchantVerifiedEvent {
     pub merchant_id: u64,
     pub status: bool,
@@ -135,6 +210,7 @@ pub fn publish_merchant_key_set_event(
 
 #[contractevent]
 pub struct RoleGrantedEvent {
+    pub admin: Address,
     pub user: Address,
     pub role: crate::types::Role,
     pub timestamp: u64,
@@ -142,11 +218,13 @@ pub struct RoleGrantedEvent {
 
 pub fn publish_role_granted_event(
     env: &Env,
+    admin: Address,
     user: Address,
     role: crate::types::Role,
     timestamp: u64,
 ) {
     RoleGrantedEvent {
+        admin,
         user,
         role,
         timestamp,
@@ -156,6 +234,7 @@ pub fn publish_role_granted_event(
 
 #[contractevent]
 pub struct RoleRevokedEvent {
+    pub admin: Address,
     pub user: Address,
     pub role: crate::types::Role,
     pub timestamp: u64,
@@ -163,11 +242,13 @@ pub struct RoleRevokedEvent {
 
 pub fn publish_role_revoked_event(
     env: &Env,
+    admin: Address,
     user: Address,
     role: crate::types::Role,
     timestamp: u64,
 ) {
     RoleRevokedEvent {
+        admin,
         user,
         role,
         timestamp,
@@ -197,13 +278,15 @@ pub fn publish_contract_unpaused_event(env: &Env, admin: Address, timestamp: u64
 
 #[contractevent]
 pub struct FeeSetEvent {
+    pub admin: Address,
     pub token: Address,
     pub fee: i128,
     pub timestamp: u64,
 }
 
-pub fn publish_fee_set_event(env: &Env, token: Address, fee: i128, timestamp: u64) {
+pub fn publish_fee_set_event(env: &Env, admin: Address, token: Address, fee: i128, timestamp: u64) {
     FeeSetEvent {
+        admin,
         token,
         fee,
         timestamp,
@@ -268,6 +351,286 @@ pub fn publish_fee_discount_applied_event(
         merchant,
         volume,
         discount_bps,
+// Kept merchant_amount from your branch AND merchant_account from main — both are useful.
+#[contractevent]
+pub struct InvoicePaidEvent {
+    pub invoice_id: u64,
+    pub merchant_id: u64,
+    pub merchant_account: Address,
+    pub payer: Address,
+    pub amount: i128,
+    pub fee: i128,
+    pub merchant_amount: i128,
+    pub token: Address,
+    pub timestamp: u64,
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn publish_invoice_paid_event(
+    env: &Env,
+    invoice_id: u64,
+    merchant_id: u64,
+    merchant_account: Address,
+    payer: Address,
+    amount: i128,
+    fee: i128,
+    merchant_amount: i128,
+    token: Address,
+    timestamp: u64,
+) {
+    InvoicePaidEvent {
+        invoice_id,
+        merchant_id,
+        merchant_account,
+        payer,
+        amount,
+        fee,
+        merchant_amount,
+        token,
+        timestamp,
+    }
+    .publish(env);
+}
+
+#[contractevent]
+pub struct InvoiceCancelledEvent {
+    pub invoice_id: u64,
+    pub merchant: Address,
+    pub timestamp: u64,
+}
+
+pub fn publish_invoice_cancelled_event(
+    env: &Env,
+    invoice_id: u64,
+    merchant: Address,
+    timestamp: u64,
+) {
+    InvoiceCancelledEvent {
+        invoice_id,
+        merchant,
+        timestamp,
+    }
+    .publish(env);
+}
+
+#[contractevent]
+pub struct InvoiceAmendedEvent {
+    pub invoice_id: u64,
+    pub merchant: Address,
+    pub old_amount: i128,
+    pub new_amount: i128,
+    pub timestamp: u64,
+}
+
+pub fn publish_invoice_amended_event(
+    env: &Env,
+    invoice_id: u64,
+    merchant: Address,
+    old_amount: i128,
+    new_amount: i128,
+    timestamp: u64,
+) {
+    InvoiceAmendedEvent {
+        invoice_id,
+        merchant,
+        old_amount,
+        new_amount,
+        timestamp,
+    }
+    .publish(env);
+}
+
+#[contractevent]
+pub struct NonceInvalidatedEvent {
+    pub merchant: Address,
+    pub nonce: BytesN<32>,
+    pub timestamp: u64,
+}
+
+pub fn publish_nonce_invalidated_event(
+    env: &Env,
+    merchant: Address,
+    nonce: BytesN<32>,
+    timestamp: u64,
+) {
+    NonceInvalidatedEvent {
+        merchant,
+        nonce,
+        timestamp,
+    }
+    .publish(env);
+}
+
+// ── Subscription events ───────────────────────────────────────────────────────
+
+// Kept token field from your branch (more informative than main's leaner version).
+#[contractevent]
+pub struct SubscriptionPlanCreatedEvent {
+    pub plan_id: u64,
+    pub merchant: Address,
+    pub token: Address,
+    pub amount: i128,
+    pub interval: u64,
+    pub timestamp: u64,
+}
+
+pub fn publish_subscription_plan_created_event(
+    env: &Env,
+    plan_id: u64,
+    merchant: Address,
+    token: Address,
+    amount: i128,
+    interval: u64,
+    timestamp: u64,
+) {
+    SubscriptionPlanCreatedEvent {
+        plan_id,
+        merchant,
+        token,
+        amount,
+        interval,
+        timestamp,
+    }
+    .publish(env);
+}
+
+#[contractevent]
+pub struct SubscribedEvent {
+    pub subscription_id: u64,
+    pub plan_id: u64,
+    pub customer: Address,
+    pub timestamp: u64,
+}
+
+pub fn publish_subscribed_event(
+    env: &Env,
+    subscription_id: u64,
+    plan_id: u64,
+    customer: Address,
+    timestamp: u64,
+) {
+    SubscribedEvent {
+        subscription_id,
+        plan_id,
+        customer,
+        timestamp,
+    }
+    .publish(env);
+}
+
+// Kept the richer version from your branch (plan_id, customer, merchant, token).
+#[contractevent]
+pub struct SubscriptionChargedEvent {
+    pub subscription_id: u64,
+    pub plan_id: u64,
+    pub customer: Address,
+    pub merchant: Address,
+    pub amount: i128,
+    pub fee: i128,
+    pub token: Address,
+    pub timestamp: u64,
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn publish_subscription_charged_event(
+    env: &Env,
+    subscription_id: u64,
+    plan_id: u64,
+    customer: Address,
+    merchant: Address,
+    amount: i128,
+    fee: i128,
+    token: Address,
+    timestamp: u64,
+) {
+    SubscriptionChargedEvent {
+        subscription_id,
+        plan_id,
+        customer,
+        merchant,
+        amount,
+        fee,
+        token,
+        timestamp,
+    }
+    .publish(env);
+}
+
+// Used "caller" from your branch — more accurate than "cancelled_by".
+#[contractevent]
+pub struct SubscriptionCancelledEvent {
+    pub subscription_id: u64,
+    pub caller: Address,
+    pub timestamp: u64,
+}
+
+pub fn publish_subscription_cancelled_event(
+    env: &Env,
+    subscription_id: u64,
+    caller: Address,
+    timestamp: u64,
+) {
+    SubscriptionCancelledEvent {
+        subscription_id,
+        caller,
+        timestamp,
+    }
+    .publish(env);
+}
+
+#[contractevent]
+pub struct AccountWasmHashSetEvent {
+    pub admin: Address,
+    pub wasm_hash: BytesN<32>,
+    pub timestamp: u64,
+}
+
+pub fn publish_account_wasm_hash_set_event(
+    env: &Env,
+    admin: Address,
+    wasm_hash: BytesN<32>,
+    timestamp: u64,
+) {
+    AccountWasmHashSetEvent {
+        admin,
+        wasm_hash,
+        timestamp,
+    }
+    .publish(env);
+}
+
+#[contractevent]
+pub struct PlanDeactivatedEvent {
+    pub plan_id: u64,
+    pub merchant: Address,
+    pub timestamp: u64,
+}
+
+pub fn publish_plan_deactivated_event(env: &Env, plan_id: u64, merchant: Address, timestamp: u64) {
+    PlanDeactivatedEvent {
+        plan_id,
+        merchant,
+        timestamp,
+    }
+    .publish(env);
+}
+
+#[contractevent]
+pub struct MerchantTokensSetEvent {
+    pub merchant: Address,
+    pub tokens: Vec<Address>,
+    pub timestamp: u64,
+}
+
+pub fn publish_merchant_tokens_set_event(
+    env: &Env,
+    merchant: Address,
+    tokens: Vec<Address>,
+    timestamp: u64,
+) {
+    MerchantTokensSetEvent {
+        merchant,
+        tokens,
         timestamp,
     }
     .publish(env);

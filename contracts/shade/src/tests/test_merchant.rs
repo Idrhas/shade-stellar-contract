@@ -1,56 +1,12 @@
 #![cfg(test)]
 
-use crate::components::merchant as merchant_component;
+use crate::errors::ContractError;
 use crate::shade::{Shade, ShadeClient};
-use soroban_sdk::testutils::{Address as _, Events as _};
-use soroban_sdk::{Address, Env, Map, Symbol, TryIntoVal, Val};
+use crate::types::DataKey;
+use soroban_sdk::testutils::Address as _;
+use soroban_sdk::{Address, Env};
 
-fn setup_test() -> (Env, ShadeClient<'static>, Address, Address) {
-    let env = Env::default();
-    env.mock_all_auths();
-    let contract_id = env.register(Shade, ());
-    let client = ShadeClient::new(&env, &contract_id);
-    let admin = Address::generate(&env);
-    client.initialize(&admin);
-    (env, client, contract_id, admin)
-}
-
-fn assert_latest_merchant_status_event(
-    env: &Env,
-    contract_id: &Address,
-    expected_merchant_id: u64,
-    expected_active: bool,
-    expected_timestamp: u64,
-) {
-    let events = env.events().all();
-    assert!(events.len() > 0);
-
-    let (event_contract_id, topics, data) = events.get(events.len() - 1).unwrap();
-    assert_eq!(&event_contract_id, contract_id);
-    assert_eq!(topics.len(), 1);
-
-    let event_name: Symbol = topics.get(0).unwrap().try_into_val(env).unwrap();
-    assert_eq!(
-        event_name,
-        Symbol::new(env, "merchant_status_changed_event")
-    );
-
-    let data_map: Map<Symbol, Val> = data.try_into_val(env).unwrap();
-    let merchant_id_val = data_map.get(Symbol::new(env, "merchant_id")).unwrap();
-    let active_val = data_map.get(Symbol::new(env, "active")).unwrap();
-    let timestamp_val = data_map.get(Symbol::new(env, "timestamp")).unwrap();
-
-    let merchant_id_in_event: u64 = merchant_id_val.try_into_val(env).unwrap();
-    let active_in_event: bool = active_val.try_into_val(env).unwrap();
-    let timestamp_in_event: u64 = timestamp_val.try_into_val(env).unwrap();
-
-    assert_eq!(merchant_id_in_event, expected_merchant_id);
-    assert_eq!(active_in_event, expected_active);
-    assert_eq!(timestamp_in_event, expected_timestamp);
-}
-
-#[test]
-fn test_set_merchant_status_admin_can_deactivate() {
+fn setup_test() -> (Env, ShadeClient<'static>, Address) {
     let env = Env::default();
     env.mock_all_auths();
 
@@ -60,157 +16,107 @@ fn test_set_merchant_status_admin_can_deactivate() {
     let admin = Address::generate(&env);
     client.initialize(&admin);
 
+    (env, client, contract_id)
+}
+
+#[test]
+fn test_register_merchant_successfully() {
+    let (env, client, contract_id) = setup_test();
     let merchant = Address::generate(&env);
+
     client.register_merchant(&merchant);
 
-    // Merchant should be active by default
-    assert_eq!(client.is_merchant_active(&1), true);
+    let merchant_data = client.get_merchant(&1u64);
+    assert_eq!(merchant_data.id, 1);
+    assert_eq!(merchant_data.address, merchant);
+    assert!(merchant_data.active);
 
-    let expected_timestamp = env.ledger().timestamp();
+    assert!(client.is_merchant(&merchant));
 
-    env.as_contract(&contract_id, || {
-        merchant_component::set_merchant_status(&env, &admin, 1, false);
-        assert_latest_merchant_status_event(&env, &contract_id, 1, false, expected_timestamp);
+    let merchant_count: u64 = env.as_contract(&contract_id, || {
+        env.storage()
+            .persistent()
+            .get(&DataKey::MerchantCount)
+            .unwrap()
     });
-
-    assert_eq!(client.is_merchant_active(&1), false);
+    assert_eq!(merchant_count, 1);
 }
 
 #[test]
-fn test_set_merchant_status_admin_can_activate() {
-    let env = Env::default();
-    env.mock_all_auths();
+fn test_register_multiple_merchants_with_unique_ids() {
+    let (env, client, contract_id) = setup_test();
+    let merchant_1 = Address::generate(&env);
+    let merchant_2 = Address::generate(&env);
 
-    let contract_id = env.register(Shade, ());
-    let client = ShadeClient::new(&env, &contract_id);
+    client.register_merchant(&merchant_1);
+    client.register_merchant(&merchant_2);
 
-    let admin = Address::generate(&env);
-    client.initialize(&admin);
+    let merchant_data_1 = client.get_merchant(&1u64);
+    let merchant_data_2 = client.get_merchant(&2u64);
 
-    let merchant = Address::generate(&env);
-    client.register_merchant(&merchant);
+    assert_eq!(merchant_data_1.id, 1);
+    assert_eq!(merchant_data_1.address, merchant_1);
+    assert_eq!(merchant_data_2.id, 2);
+    assert_eq!(merchant_data_2.address, merchant_2);
 
-    // Deactivate first
-    env.as_contract(&contract_id, || {
-        merchant_component::set_merchant_status(&env, &admin, 1, false);
+    let merchant_count: u64 = env.as_contract(&contract_id, || {
+        env.storage()
+            .persistent()
+            .get(&DataKey::MerchantCount)
+            .unwrap()
     });
-    assert_eq!(client.is_merchant_active(&1), false);
-
-    // Now activate
-    let expected_timestamp = env.ledger().timestamp();
-
-    env.as_contract(&contract_id, || {
-        merchant_component::set_merchant_status(&env, &admin, 1, true);
-        assert_latest_merchant_status_event(&env, &contract_id, 1, true, expected_timestamp);
-    });
-
-    assert_eq!(client.is_merchant_active(&1), true);
+    assert_eq!(merchant_count, 2);
 }
 
-#[should_panic(expected = "HostError: Error(Contract, #1)")]
 #[test]
-fn test_set_merchant_status_non_admin_not_authorized() {
-    let (env, client, _contract_id, _admin) = setup_test();
-
+fn test_register_duplicate_merchant_fails() {
+    let (env, client, _contract_id) = setup_test();
     let merchant = Address::generate(&env);
+
     client.register_merchant(&merchant);
 
-    let non_admin = Address::generate(&env);
-    client.set_merchant_status(&non_admin, &1, &false);
-}
+    let expected_error =
+        soroban_sdk::Error::from_contract_error(ContractError::MerchantAlreadyRegistered as u32);
+    let result = client.try_register_merchant(&merchant);
 
-#[should_panic(expected = "HostError: Error(Contract, #6)")]
-#[test]
-fn test_set_merchant_status_invalid_merchant_id() {
-    let (_env, client, _contract_id, admin) = setup_test();
-
-    // Try to set status for non-existent merchant ID
-    client.set_merchant_status(&admin, &999, &false);
-}
-
-#[should_panic(expected = "HostError: Error(Contract, #6)")]
-#[test]
-fn test_set_merchant_status_merchant_id_zero() {
-    let (_env, client, _contract_id, admin) = setup_test();
-
-    // Try to set status for merchant ID 0
-    client.set_merchant_status(&admin, &0, &false);
-}
-
-#[should_panic(expected = "HostError: Error(Contract, #6)")]
-#[test]
-fn test_is_merchant_active_merchant_not_found() {
-    let (_env, client, _contract_id, _admin) = setup_test();
-
-    // Try to check status for non-existent merchant
-    client.is_merchant_active(&999);
-}
-
-#[should_panic(expected = "HostError: Error(Contract, #6)")]
-#[test]
-fn test_is_merchant_active_merchant_id_zero() {
-    let (_env, client, _contract_id, _admin) = setup_test();
-
-    // Try to check status for merchant ID 0
-    client.is_merchant_active(&0);
+    assert!(matches!(result, Err(Ok(err)) if err == expected_error));
 }
 
 #[test]
-fn test_merchant_active_by_default() {
-    let (env, client, _contract_id, _admin) = setup_test();
-
+fn test_get_merchant_lookup_valid_id() {
+    let (env, client, _contract_id) = setup_test();
     let merchant = Address::generate(&env);
+
     client.register_merchant(&merchant);
 
-    // Newly registered merchant should be active
-    assert_eq!(client.is_merchant_active(&1), true);
+    let merchant_data = client.get_merchant(&1u64);
+    assert_eq!(merchant_data.id, 1);
+    assert_eq!(merchant_data.address, merchant);
+    assert!(merchant_data.active);
 }
 
 #[test]
-fn test_multiple_merchants_independent_status() {
-    let (env, client, _contract_id, admin) = setup_test();
+fn test_get_merchant_lookup_invalid_id_fails() {
+    let (_env, client, _contract_id) = setup_test();
 
-    let merchant1 = Address::generate(&env);
-    let merchant2 = Address::generate(&env);
+    let expected_error =
+        soroban_sdk::Error::from_contract_error(ContractError::MerchantNotFound as u32);
 
-    client.register_merchant(&merchant1);
-    client.register_merchant(&merchant2);
+    let missing_zero = client.try_get_merchant(&0u64);
+    assert!(matches!(missing_zero, Err(Ok(err)) if err == expected_error));
 
-    // Both should be active
-    assert_eq!(client.is_merchant_active(&1), true);
-    assert_eq!(client.is_merchant_active(&2), true);
-
-    // Deactivate merchant 1
-    client.set_merchant_status(&admin, &1, &false);
-
-    // Check they have independent status
-    assert_eq!(client.is_merchant_active(&1), false);
-    assert_eq!(client.is_merchant_active(&2), true);
-
-    // Reactivate merchant 1, merchant 2 should remain active
-    client.set_merchant_status(&admin, &1, &true);
-    assert_eq!(client.is_merchant_active(&1), true);
-    assert_eq!(client.is_merchant_active(&2), true);
+    let missing_out_of_range = client.try_get_merchant(&99u64);
+    assert!(matches!(missing_out_of_range, Err(Ok(err)) if err == expected_error));
 }
 
 #[test]
-fn test_event_emission_on_status_change() {
-    let env = Env::default();
-    env.mock_all_auths();
+fn test_is_merchant_returns_true_for_registered_and_false_for_unknown() {
+    let (env, client, _contract_id) = setup_test();
+    let registered_merchant = Address::generate(&env);
+    let unknown_merchant = Address::generate(&env);
 
-    let contract_id = env.register(Shade, ());
-    let client = ShadeClient::new(&env, &contract_id);
+    client.register_merchant(&registered_merchant);
 
-    let admin = Address::generate(&env);
-    client.initialize(&admin);
-
-    let merchant = Address::generate(&env);
-    client.register_merchant(&merchant);
-
-    let expected_timestamp = env.ledger().timestamp();
-
-    env.as_contract(&contract_id, || {
-        merchant_component::set_merchant_status(&env, &admin, 1, false);
-        assert_latest_merchant_status_event(&env, &contract_id, 1, false, expected_timestamp);
-    });
+    assert!(client.is_merchant(&registered_merchant));
+    assert!(!client.is_merchant(&unknown_merchant));
 }

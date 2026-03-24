@@ -5,7 +5,7 @@ use crate::errors::ContractError;
 use crate::shade::Shade;
 use crate::shade::ShadeClient;
 use soroban_sdk::testutils::{Address as _, Events as _};
-use soroban_sdk::{Address, Env, Map, Symbol, TryIntoVal, Val};
+use soroban_sdk::{Address, Env, Map, Symbol, TryIntoVal, Val, Vec};
 
 fn assert_latest_token_event(
     env: &Env,
@@ -15,7 +15,7 @@ fn assert_latest_token_event(
     expected_timestamp: u64,
 ) {
     let events = env.events().all();
-    assert!(events.len() > 0);
+    assert!(!events.is_empty());
 
     let (event_contract_id, topics, data) = events.get(events.len() - 1).unwrap();
     assert_eq!(event_contract_id, contract_id.clone());
@@ -65,6 +65,40 @@ fn test_admin_adds_token_and_emits_event() {
     });
 
     assert!(client.is_accepted_token(&token));
+}
+
+#[test]
+fn test_batch_add_tokens() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(Shade, ());
+    let client = ShadeClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    client.initialize(&admin);
+
+    let token_admin = Address::generate(&env);
+    let token1 = env
+        .register_stellar_asset_contract_v2(token_admin.clone())
+        .address();
+    let token2 = env
+        .register_stellar_asset_contract_v2(token_admin.clone())
+        .address();
+    let token3 = env
+        .register_stellar_asset_contract_v2(token_admin.clone())
+        .address();
+
+    let mut tokens = Vec::new(&env);
+    tokens.push_back(token1.clone());
+    tokens.push_back(token2.clone());
+    tokens.push_back(token3.clone());
+
+    client.add_accepted_tokens(&admin, &tokens);
+
+    assert!(client.is_accepted_token(&token1));
+    assert!(client.is_accepted_token(&token2));
+    assert!(client.is_accepted_token(&token3));
 }
 
 #[test]

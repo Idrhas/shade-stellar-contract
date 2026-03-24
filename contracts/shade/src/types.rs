@@ -1,8 +1,9 @@
-use soroban_sdk::{contracttype, Address};
+use soroban_sdk::{contracttype, Address, BytesN};
 
 #[contracttype]
 pub enum DataKey {
     Admin,
+    PendingAdmin,
     Paused,
     FeeInBasisPoints(Address),
     FeeAmount(Address),
@@ -13,14 +14,22 @@ pub enum DataKey {
     MerchantCount,
     MerchantId(Address),
     TokenFee(Address),
-    MerchantTokens,
+    MerchantTokens(Address),
     MerchantBalance(Address),
+    MerchantAccount(u64),
     Invoice(u64),
     InvoiceCount,
     ReentrancyStatus,
+    AccountWasmHash,
     Role(Address, Role),
     MerchantAccount(Address),
     MerchantVolume(Address),
+    UsedNonce(Address, BytesN<32>),
+    // --- Subscription engine ---
+    SubscriptionPlan(u64),
+    Subscription(u64),
+    PlanCount,
+    SubscriptionCount,
 }
 
 #[contracttype]
@@ -52,6 +61,9 @@ pub struct Invoice {
     pub payer: Option<Address>,
     pub date_created: u64,
     pub date_paid: Option<u64>,
+    pub amount_paid: i128,
+    pub amount_refunded: i128,
+    pub expires_at: Option<u64>,
 }
 
 #[contracttype]
@@ -62,6 +74,9 @@ pub enum InvoiceStatus {
     Paid = 1,
     Cancelled = 2,
     Refunded = 3,
+    PartiallyRefunded = 4,
+    PartiallyPaid = 5,
+    Draft = 6,
 }
 
 #[contracttype]
@@ -78,6 +93,8 @@ pub struct InvoiceFilter {
     pub merchant: Option<Address>,
     pub min_amount: Option<u128>,
     pub max_amount: Option<u128>,
+    pub start_date: Option<u64>,
+    pub end_date: Option<u64>,
 }
 
 #[contracttype]
@@ -93,4 +110,47 @@ pub enum Role {
 pub struct VolumeDiscount {
     pub min_volume: i128,
     pub discount_bps: i128,
+// ── Subscription engine ───────────────────────────────────────────────────────
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SubscriptionPlan {
+    pub id: u64,
+    /// Numeric merchant ID — used to look up the merchant's account contract.
+    pub merchant_id: u64,
+    /// The merchant's wallet address — needed for event emission and auth checks.
+    pub merchant: Address,
+    /// Human-readable description of the plan.
+    pub description: soroban_sdk::String,
+    /// Token used for billing.
+    pub token: Address,
+    /// Amount charged per interval (in token base units).
+    pub amount: i128,
+    /// Billing interval in seconds (e.g. 2_592_000 = 30 days).
+    pub interval: u64,
+    /// Whether this plan is accepting new subscribers.
+    pub active: bool,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Subscription {
+    pub id: u64,
+    pub plan_id: u64,
+    pub customer: Address,
+    /// Copied from the plan for quick access during auth checks.
+    pub merchant_id: u64,
+    pub status: SubscriptionStatus,
+    pub date_created: u64,
+    /// Ledger timestamp of the last successful charge.
+    /// Starts at 0 so the first charge is available immediately.
+    pub last_charged: u64,
+}
+
+#[contracttype]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[repr(u32)]
+pub enum SubscriptionStatus {
+    Active = 0,
+    Cancelled = 1,
 }
