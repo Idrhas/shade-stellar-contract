@@ -616,3 +616,24 @@ pub fn publish_merchant_tokens_set_event(
     }
     .publish(env);
 }
+
+#[contractevent]
+pub struct MerchantTokenRemovedEvent {
+    pub merchant: Address,
+    pub token: Address,
+    pub timestamp: u64,
+}
+
+pub fn publish_merchant_token_removed_event(
+    env: &Env,
+    merchant: Address,
+    token: Address,
+    timestamp: u64,
+) {
+    MerchantTokenRemovedEvent {
+        merchant,
+        token,
+        timestamp,
+    }
+    .publish(env);
+}

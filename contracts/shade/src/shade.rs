@@ -318,4 +318,13 @@ impl ShadeTrait for Shade {
     fn get_merchant_accepted_tokens(env: Env, merchant: Address) -> Vec<Address> {
         merchant_component::get_merchant_accepted_tokens(&env, &merchant)
     }
+
+    fn remove_merchant_accepted_token(env: Env, merchant: Address, token: Address) {
+        pausable_component::assert_not_paused(&env);
+        merchant_component::remove_merchant_accepted_token(&env, &merchant, &token);
+    }
+
+    fn is_token_accepted_for_merchant(env: Env, merchant: Address, token: Address) -> bool {
+        merchant_component::is_token_accepted_for_merchant(&env, &merchant, &token)
+    }
 }

@@ -84,6 +84,8 @@ pub trait ShadeTrait {
 
     fn set_merchant_accepted_tokens(env: Env, merchant: Address, tokens: Vec<Address>);
     fn get_merchant_accepted_tokens(env: Env, merchant: Address) -> Vec<Address>;
+    fn remove_merchant_accepted_token(env: Env, merchant: Address, token: Address);
+    fn is_token_accepted_for_merchant(env: Env, merchant: Address, token: Address) -> bool;
 
     // ── Admin transfer (two-step handover) ───────────────────────────────────
 
