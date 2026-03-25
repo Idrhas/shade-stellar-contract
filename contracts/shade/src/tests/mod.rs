@@ -5,6 +5,7 @@ pub mod test_account_factory;
 pub mod test_admin_payment;
 pub mod test_admin_transfer;
 pub mod test_draft_invoice;
+pub mod test_calculate_fee;
 pub mod test_fees;
 pub mod test_invoice;
 pub mod test_invoice_filter;
