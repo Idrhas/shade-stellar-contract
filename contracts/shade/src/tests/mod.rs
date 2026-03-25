@@ -7,6 +7,7 @@ pub mod test_admin_transfer;
 pub mod test_draft_invoice;
 pub mod test_fees;
 pub mod test_invoice;
+pub mod test_invoice_filter;
 pub mod test_invoice_partial_refund;
 pub mod test_invoice_signed;
 pub mod test_invoice_void;
