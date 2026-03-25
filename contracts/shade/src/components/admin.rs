@@ -129,7 +129,7 @@ pub fn get_fee(env: &Env, token: &Address) -> i128 {
         .unwrap_or(0)
 }
 
-pub fn get_fee_for_amount(env: &Env, token: &Address, amount: i128) -> i128 {
+pub fn calculate_fee(env: &Env, token: &Address, amount: i128) -> i128 {
     let fee_bps: i128 = get_fee(env, token);
     if fee_bps == 0 {
         return 0;
