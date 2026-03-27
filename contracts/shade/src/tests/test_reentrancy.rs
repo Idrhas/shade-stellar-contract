@@ -213,8 +213,7 @@ fn test_add_accepted_token_reentrancy_returns_error_code_4() {
             .set(&DataKey::ReentrancyStatus, &true);
     });
 
-    let expected_error =
-        soroban_sdk::Error::from_contract_error(ContractError::Reentrancy as u32);
+    let expected_error = soroban_sdk::Error::from_contract_error(ContractError::Reentrancy as u32);
     let result = client.try_add_accepted_token(&admin, &token);
     assert!(matches!(result, Err(Ok(err)) if err == expected_error));
 }
@@ -238,8 +237,7 @@ fn test_remove_accepted_token_reentrancy_returns_error_code_4() {
             .set(&DataKey::ReentrancyStatus, &true);
     });
 
-    let expected_error =
-        soroban_sdk::Error::from_contract_error(ContractError::Reentrancy as u32);
+    let expected_error = soroban_sdk::Error::from_contract_error(ContractError::Reentrancy as u32);
     let result = client.try_remove_accepted_token(&admin, &token);
     assert!(matches!(result, Err(Ok(err)) if err == expected_error));
 }
@@ -254,8 +252,7 @@ fn test_set_fee_reentrancy_returns_error_code_4() {
             .set(&DataKey::ReentrancyStatus, &true);
     });
 
-    let expected_error =
-        soroban_sdk::Error::from_contract_error(ContractError::Reentrancy as u32);
+    let expected_error = soroban_sdk::Error::from_contract_error(ContractError::Reentrancy as u32);
     let result = client.try_set_fee(&admin, &token, &500);
     assert!(matches!(result, Err(Ok(err)) if err == expected_error));
 }
@@ -272,8 +269,7 @@ fn test_set_account_wasm_hash_reentrancy_returns_error_code_4() {
             .set(&DataKey::ReentrancyStatus, &true);
     });
 
-    let expected_error =
-        soroban_sdk::Error::from_contract_error(ContractError::Reentrancy as u32);
+    let expected_error = soroban_sdk::Error::from_contract_error(ContractError::Reentrancy as u32);
     let result = client.try_set_account_wasm_hash(&admin, &wasm_hash);
     assert!(matches!(result, Err(Ok(err)) if err == expected_error));
 }
