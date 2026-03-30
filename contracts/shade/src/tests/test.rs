@@ -3,7 +3,7 @@
 use crate::shade::Shade;
 use crate::shade::ShadeClient;
 use soroban_sdk::testutils::Address as _;
-use soroban_sdk::{Address, BytesN, Env};
+use soroban_sdk::{Address, Env};
 
 #[test]
 fn test_initialize() {
@@ -12,8 +12,7 @@ fn test_initialize() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
     assert_eq!(client.get_admin(), admin);
 }
 
@@ -25,9 +24,8 @@ fn test_initialize_twice() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
+    client.initialize(&admin);
 }
 
 #[should_panic(expected = "HostError: Error(Contract, #3)")]

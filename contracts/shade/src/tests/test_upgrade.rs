@@ -42,8 +42,7 @@ fn test_admin_can_upgrade_successfully() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let dummy_wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &dummy_wasm_hash);
+    client.initialize(&admin);
 
     let v2_hash = env.deployer().upload_contract_wasm(V2_WASM);
     client.upgrade(&v2_hash);
@@ -58,8 +57,7 @@ fn test_state_persists_after_upgrade() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let dummy_wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &dummy_wasm_hash);
+    client.initialize(&admin);
 
     let token_admin = Address::generate(&env);
     let token = env
@@ -100,8 +98,7 @@ fn test_upgrade_emits_contract_upgraded_event() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let dummy_wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &dummy_wasm_hash);
+    client.initialize(&admin);
 
     let v2_hash = env.deployer().upload_contract_wasm(V2_WASM);
     let expected_timestamp = env.ledger().timestamp();

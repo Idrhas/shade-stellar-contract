@@ -14,21 +14,6 @@ pub fn deploy_account(env: &Env, merchant: Address, merchant_id: u64) -> Address
             panic_with_error!(env, ContractError::WasmHashNotSet);
         });
 
-    #[cfg(test)]
-    if wasm_hash == BytesN::from_array(env, &[0; 32]) {
-        use soroban_sdk::testutils::Address as _;
-        // Return a mock address for testing without actual deployment
-        let mock_address = Address::generate(env);
-
-        events::publish_merchant_account_deployed_event(
-            env,
-            merchant,
-            mock_address.clone(),
-            env.ledger().timestamp(),
-        );
-        return mock_address;
-    }
-
     // Generate a random salt for deployment.
     let random_bytes_n: BytesN<32> = env.prng().gen();
     let random_bytes = Bytes::from_slice(env, &random_bytes_n.to_array());

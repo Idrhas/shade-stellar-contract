@@ -3,7 +3,7 @@
 use crate::shade::{Shade, ShadeClient};
 use crate::types::InvoiceStatus;
 use soroban_sdk::testutils::Address as _;
-use soroban_sdk::{Address, BytesN, Env, String};
+use soroban_sdk::{Address, Env, String};
 
 fn setup_test() -> (Env, ShadeClient<'static>, Address, Address) {
     let env = Env::default();
@@ -11,8 +11,7 @@ fn setup_test() -> (Env, ShadeClient<'static>, Address, Address) {
     let contract_id = env.register(Shade, ());
     let client = ShadeClient::new(&env, &contract_id);
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
     (env, client, contract_id, admin)
 }
 
@@ -106,8 +105,7 @@ fn test_void_invoice_already_paid() {
     let contract_id = env.register(Shade, ());
     let client = ShadeClient::new(&env, &contract_id);
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
 
     let token_admin = Address::generate(&env);
     let token = env
@@ -150,8 +148,7 @@ fn test_pay_voided_invoice() {
     let contract_id = env.register(Shade, ());
     let client = ShadeClient::new(&env, &contract_id);
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
 
     let token_admin = Address::generate(&env);
     let token = env
@@ -214,7 +211,7 @@ fn test_void_invoice_already_cancelled() {
 #[test]
 #[should_panic(expected = "HostError: Error(Contract, #8)")]
 fn test_void_nonexistent_invoice() {
-    let (env, client, _contract_id, admin) = setup_test();
+    let (env, client, _contract_id, _admin) = setup_test();
 
     let merchant = Address::generate(&env);
     client.register_merchant(&merchant);
@@ -233,8 +230,7 @@ fn test_void_refunded_invoice() {
     let contract_id = env.register(Shade, ());
     let client = ShadeClient::new(&env, &contract_id);
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
 
     let token_admin = Address::generate(&env);
     let token = env

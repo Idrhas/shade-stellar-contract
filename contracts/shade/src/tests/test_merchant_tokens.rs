@@ -4,7 +4,7 @@ use crate::errors::ContractError;
 use crate::shade::Shade;
 use crate::shade::ShadeClient;
 use soroban_sdk::testutils::{Address as _, Events as _};
-use soroban_sdk::{Address, BytesN, Env, Map, String, Symbol, TryIntoVal, Val, Vec};
+use soroban_sdk::{Address, Env, Map, String, Symbol, TryIntoVal, Val, Vec};
 
 fn assert_tokens_set_event(
     env: &Env,
@@ -46,8 +46,7 @@ fn test_merchant_sets_and_gets_tokens() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
 
     let merchant = Address::generate(&env);
     client.register_merchant(&merchant);
@@ -86,8 +85,7 @@ fn test_merchant_cannot_set_unaccepted_global_token() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
 
     let merchant = Address::generate(&env);
     client.register_merchant(&merchant);
@@ -112,8 +110,7 @@ fn test_invoice_creation_with_merchant_whitelist() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
 
     let merchant = Address::generate(&env);
     client.register_merchant(&merchant);
@@ -165,8 +162,7 @@ fn test_empty_merchant_whitelist_defaults_to_global() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
 
     let merchant = Address::generate(&env);
     client.register_merchant(&merchant);
@@ -195,8 +191,7 @@ fn test_non_merchant_cannot_set_tokens() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
 
     let non_merchant = Address::generate(&env);
     let tokens = Vec::new(&env);
@@ -216,8 +211,7 @@ fn test_duplicate_tokens_are_deduplicated() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
 
     let merchant = Address::generate(&env);
     client.register_merchant(&merchant);
@@ -247,8 +241,7 @@ fn test_merchant_can_overwrite_whitelist() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
 
     let merchant = Address::generate(&env);
     client.register_merchant(&merchant);
@@ -295,8 +288,7 @@ fn test_remove_merchant_accepted_token() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
 
     let merchant = Address::generate(&env);
     client.register_merchant(&merchant);
@@ -336,8 +328,7 @@ fn test_remove_nonexistent_token_fails() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
 
     let merchant = Address::generate(&env);
     client.register_merchant(&merchant);
@@ -374,8 +365,7 @@ fn test_inactive_merchant_cannot_set_tokens() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
 
     let merchant = Address::generate(&env);
     client.register_merchant(&merchant);
@@ -406,8 +396,7 @@ fn test_is_token_accepted_for_merchant_public() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
 
     let merchant = Address::generate(&env);
     client.register_merchant(&merchant);

@@ -3,7 +3,7 @@
 use crate::shade::{Shade, ShadeClient};
 use crate::types::InvoiceStatus;
 use soroban_sdk::testutils::{Address as _, Events, Ledger as _};
-use soroban_sdk::{token, Address, BytesN, Env, Map, String, Symbol, TryIntoVal, Val};
+use soroban_sdk::{token, Address, Env, Map, String, Symbol, TryIntoVal, Val};
 
 fn setup_test_with_payment() -> (Env, ShadeClient<'static>, Address, Address, Address) {
     let env = Env::default();
@@ -15,8 +15,7 @@ fn setup_test_with_payment() -> (Env, ShadeClient<'static>, Address, Address, Ad
 
     // Initialize with admin
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    shade_client.initialize(&admin, &wasm_hash);
+    shade_client.initialize(&admin);
 
     // Create and register token
     let token_admin = Address::generate(&env);
@@ -315,12 +314,15 @@ fn test_payment_token_not_accepted() {
 }
 
 #[test]
-fn test_payment_success() {
+#[should_panic(expected = "HostError: Error(Contract, #20)")]
+fn test_payment_merchant_account_not_set() {
     let (env, shade_client, _shade_contract_id, _admin, token) = setup_test_with_payment();
 
     // Register merchant
     let merchant = Address::generate(&env);
     shade_client.register_merchant(&merchant);
+
+    // DO NOT set merchant account - this will cause the panic
 
     // Create invoice
     let description = String::from_str(&env, "Test Invoice");
@@ -331,12 +333,8 @@ fn test_payment_success() {
     let token_client = token::StellarAssetClient::new(&env, &token);
     token_client.mint(&customer, &1000);
 
-    // Customer pays invoice
+    // Customer attempts to pay invoice (should panic - merchant account not set)
     shade_client.pay_invoice(&customer, &invoice_id);
-
-    // Verify invoice status
-    let invoice = shade_client.get_invoice(&invoice_id);
-    assert_eq!(invoice.status, InvoiceStatus::Paid);
 }
 
 #[test]

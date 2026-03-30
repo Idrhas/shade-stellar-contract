@@ -5,7 +5,7 @@ use crate::errors::ContractError;
 use crate::shade::Shade;
 use crate::shade::ShadeClient;
 use soroban_sdk::testutils::{Address as _, Events as _};
-use soroban_sdk::{Address, BytesN, Env, Map, Symbol, TryIntoVal, Val};
+use soroban_sdk::{Address, Env, Map, Symbol, TryIntoVal, Val};
 
 fn assert_latest_merchant_status_event(
     env: &Env,
@@ -50,8 +50,7 @@ fn test_successful_activation() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
 
     let merchant = Address::generate(&env);
     client.register_merchant(&merchant);
@@ -92,8 +91,7 @@ fn test_successful_deactivation() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
 
     let merchant = Address::generate(&env);
     client.register_merchant(&merchant);
@@ -128,8 +126,8 @@ fn test_unauthorized_status_change() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    let non_admin = Address::generate(&env);
+    client.initialize(&admin);
 
     let merchant = Address::generate(&env);
     client.register_merchant(&merchant);
@@ -139,7 +137,6 @@ fn test_unauthorized_status_change() {
     let expected_error =
         soroban_sdk::Error::from_contract_error(ContractError::NotAuthorized as u32);
 
-    let non_admin = Address::generate(&env);
     let result = client.try_set_merchant_status(&non_admin, &merchant_id, &false);
     assert!(matches!(result, Err(Ok(err)) if err == expected_error));
 
@@ -156,8 +153,7 @@ fn test_invalid_merchant_id_status_change() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
 
     let invalid_merchant_id = 999u64;
     client.set_merchant_status(&admin, &invalid_merchant_id, &true);
@@ -173,8 +169,7 @@ fn test_is_merchant_active_invalid_id() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
 
     let invalid_merchant_id = 999u64;
     client.is_merchant_active(&invalid_merchant_id);
@@ -190,8 +185,7 @@ fn test_set_merchant_status_zero_id() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
 
     let zero_merchant_id = 0u64;
     client.set_merchant_status(&admin, &zero_merchant_id, &true);
@@ -207,8 +201,7 @@ fn test_is_merchant_active_zero_id() {
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
 
     let zero_merchant_id = 0u64;
     client.is_merchant_active(&zero_merchant_id);

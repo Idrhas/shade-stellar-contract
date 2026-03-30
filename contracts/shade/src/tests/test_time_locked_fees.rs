@@ -4,7 +4,7 @@ use crate::errors::ContractError;
 use crate::shade::Shade;
 use crate::shade::ShadeClient;
 use soroban_sdk::testutils::{Address as _, Ledger};
-use soroban_sdk::{Address, BytesN, Env};
+use soroban_sdk::{Address, Env};
 
 fn setup(env: &Env) -> (Address, ShadeClient, Address) {
     env.mock_all_auths();
@@ -12,8 +12,7 @@ fn setup(env: &Env) -> (Address, ShadeClient, Address) {
     let client = ShadeClient::new(env, &contract_id);
 
     let admin = Address::generate(env);
-    let wasm_hash = BytesN::from_array(env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
 
     let token_admin = Address::generate(env);
     let token = env

@@ -4,7 +4,7 @@ use crate::shade::{Shade, ShadeClient};
 use crate::types::{DataKey, InvoiceStatus};
 use account::account::{MerchantAccount, MerchantAccountClient};
 use soroban_sdk::testutils::{Address as _, Events as _, Ledger as _};
-use soroban_sdk::{token, Address, BytesN, Env, Map, String, Symbol, TryIntoVal, Val};
+use soroban_sdk::{token, Address, Env, Map, String, Symbol, TryIntoVal, Val};
 
 fn setup_test() -> (Env, ShadeClient<'static>, Address, Address) {
     let env = Env::default();
@@ -12,8 +12,7 @@ fn setup_test() -> (Env, ShadeClient<'static>, Address, Address) {
     let contract_id = env.register(Shade, ());
     let client = ShadeClient::new(&env, &contract_id);
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
     (env, client, contract_id, admin)
 }
 
@@ -157,7 +156,7 @@ fn test_create_multiple_invoices() {
 #[should_panic(expected = "HostError: Error(Contract, #8)")]
 #[test]
 fn test_get_invoice_not_found() {
-    let (_env, client, _contract_id, admin) = setup_test();
+    let (_env, client, _contract_id, _admin) = setup_test();
     client.get_invoice(&999);
 }
 
@@ -444,7 +443,7 @@ fn test_pay_cancelled_invoice() {
 #[test]
 #[should_panic(expected = "HostError: Error(Contract, #8)")]
 fn test_void_non_existent_invoice() {
-    let (env, client, _contract_id, admin) = setup_test();
+    let (env, client, _contract_id, _admin) = setup_test();
 
     let merchant = Address::generate(&env);
     client.register_merchant(&merchant);
@@ -650,7 +649,7 @@ fn test_amend_invoice_negative_amount_fails() {
 #[test]
 #[should_panic(expected = "HostError: Error(Contract, #8)")]
 fn test_amend_non_existent_invoice_fails() {
-    let (env, client, _contract_id, admin) = setup_test();
+    let (env, client, _contract_id, _admin) = setup_test();
 
     let merchant = Address::generate(&env);
     client.register_merchant(&merchant);
@@ -667,8 +666,7 @@ fn setup_test_with_payment() -> (Env, ShadeClient<'static>, Address, Address, Ad
     let shade_client = ShadeClient::new(&env, &shade_contract_id);
 
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    shade_client.initialize(&admin, &wasm_hash);
+    shade_client.initialize(&admin);
 
     let token_admin = Address::generate(&env);
     let token = env.register_stellar_asset_contract_v2(token_admin.clone());

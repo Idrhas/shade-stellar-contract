@@ -6,7 +6,7 @@ use soroban_sdk::{contracttrait, Address, BytesN, Env, String, Vec};
 
 #[contracttrait]
 pub trait ShadeTrait {
-    fn initialize(env: Env, admin: Address, account_wasm_hash: soroban_sdk::BytesN<32>);
+    fn initialize(env: Env, admin: Address);
     fn get_admin(env: Env) -> Address;
     fn add_accepted_token(env: Env, admin: Address, token: Address);
     fn add_accepted_tokens(env: Env, admin: Address, tokens: Vec<Address>);
@@ -74,7 +74,7 @@ pub trait ShadeTrait {
         status: bool,
     );
     fn calculate_fee(env: Env, merchant: Address, token: Address, amount: i128) -> i128;
-    fn get_merchant_volume(env: Env, merchant: Address) -> i128;
+    fn get_merchant_volume(env: Env, merchant: Address, token: Address) -> i128;
     fn set_merchant_account(env: Env, merchant: Address, account: Address);
     fn get_merchant_account(env: Env, merchant_id: u64) -> Address;
     fn pay_invoice(env: Env, payer: Address, invoice_id: u64);

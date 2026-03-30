@@ -3,7 +3,7 @@
 use crate::shade::{Shade, ShadeClient};
 use crate::types::{InvoiceStatus, Role};
 use soroban_sdk::testutils::Address as _;
-use soroban_sdk::{Address, BytesN, Env, String};
+use soroban_sdk::{Address, Env, String};
 
 fn setup_invoice_test() -> (
     Env,
@@ -20,8 +20,7 @@ fn setup_invoice_test() -> (
     let client = ShadeClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &wasm_hash);
+    client.initialize(&admin);
 
     let manager = Address::generate(&env);
     let merchant = Address::generate(&env);

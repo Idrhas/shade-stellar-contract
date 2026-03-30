@@ -17,7 +17,7 @@ pub struct Shade;
 
 #[contractimpl]
 impl ShadeTrait for Shade {
-    fn initialize(env: Env, admin: Address, account_wasm_hash: BytesN<32>) {
+    fn initialize(env: Env, admin: Address) {
         if env.storage().persistent().has(&DataKey::Admin) {
             panic_with_error!(&env, ContractError::AlreadyInitialized);
         }
@@ -29,9 +29,6 @@ impl ShadeTrait for Shade {
         env.storage()
             .persistent()
             .set(&DataKey::ContractInfo, &contract_info);
-        env.storage()
-            .persistent()
-            .set(&DataKey::AccountWasmHash, &account_wasm_hash);
         events::publish_initialized_event(&env, admin, env.ledger().timestamp());
     }
 
@@ -245,8 +242,8 @@ impl ShadeTrait for Shade {
         admin_component::calculate_fee(&env, &merchant, &token, amount)
     }
 
-    fn get_merchant_volume(env: Env, merchant: Address) -> i128 {
-        admin_component::get_merchant_volume(&env, &merchant)
+    fn get_merchant_volume(env: Env, merchant: Address, token: Address) -> i128 {
+        admin_component::get_merchant_volume(&env, &merchant, &token)
     }
 
     fn set_merchant_account(env: Env, merchant: Address, account: Address) {

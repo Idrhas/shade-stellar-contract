@@ -4,7 +4,7 @@ use crate::shade::{Shade, ShadeClient};
 use crate::types::InvoiceStatus;
 use account::account::{MerchantAccount, MerchantAccountClient};
 use soroban_sdk::testutils::{Address as _, Ledger as _};
-use soroban_sdk::{token, Address, BytesN, Env, String};
+use soroban_sdk::{token, Address, Env, String};
 
 /// Shared setup: deploy Shade, initialize, register a token with **0 fee**,
 /// register a merchant, deploy + link a merchant account, create an invoice,
@@ -34,8 +34,7 @@ fn setup_paid_invoice(pay_timestamp: u64) -> RefundTestContext<'static> {
     let shade_id = env.register(Shade, ());
     let client = ShadeClient::new(&env, &shade_id);
     let admin = Address::generate(&env);
-    let dummy_wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &dummy_wasm_hash);
+    client.initialize(&admin);
 
     // Register token with 0 fee – keeps full amount in merchant account
     let token_admin = Address::generate(&env);
@@ -217,8 +216,7 @@ fn test_refund_pending_invoice_fails() {
     let shade_id = env.register(Shade, ());
     let client = ShadeClient::new(&env, &shade_id);
     let admin = Address::generate(&env);
-    let dummy_wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &dummy_wasm_hash);
+    client.initialize(&admin);
 
     let merchant = Address::generate(&env);
     client.register_merchant(&merchant);
@@ -248,8 +246,7 @@ fn test_refund_cancelled_invoice_fails() {
     let shade_id = env.register(Shade, ());
     let client = ShadeClient::new(&env, &shade_id);
     let admin = Address::generate(&env);
-    let dummy_wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &dummy_wasm_hash);
+    client.initialize(&admin);
 
     let merchant = Address::generate(&env);
     client.register_merchant(&merchant);
@@ -327,8 +324,7 @@ fn test_partial_refund_with_fee() {
     let shade_id = env.register(Shade, ());
     let client = ShadeClient::new(&env, &shade_id);
     let admin = Address::generate(&env);
-    let dummy_wasm_hash = BytesN::from_array(&env, &[0; 32]);
-    client.initialize(&admin, &dummy_wasm_hash);
+    client.initialize(&admin);
 
     let token_admin = Address::generate(&env);
     let token_contract = env.register_stellar_asset_contract_v2(token_admin.clone());
