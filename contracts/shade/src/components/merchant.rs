@@ -312,21 +312,78 @@ pub fn set_merchant_accepted_tokens(env: &Env, merchant: &Address, tokens: &Vec<
         panic_with_error!(env, ContractError::MerchantNotFound);
     }
 
-    // Verify all tokens are globally accepted
+    let merchant_id = get_merchant_id(env, merchant);
+    if !is_merchant_active(env, merchant_id) {
+        panic_with_error!(env, ContractError::MerchantNotActive);
+    }
+
+    // Deduplicate and verify all tokens are globally accepted
+    let mut deduped: Vec<Address> = Vec::new(env);
     for token in tokens.iter() {
         if !admin_component::is_accepted_token(env, &token) {
             panic_with_error!(env, ContractError::TokenNotAccepted);
+        }
+        // Only add if not already present
+        let mut found = false;
+        for existing in deduped.iter() {
+            if existing == token {
+                found = true;
+                break;
+            }
+        }
+        if !found {
+            deduped.push_back(token.clone());
         }
     }
 
     env.storage()
         .persistent()
-        .set(&DataKey::MerchantTokens(merchant.clone()), tokens);
+        .set(&DataKey::MerchantTokens(merchant.clone()), &deduped);
 
     events::publish_merchant_tokens_set_event(
         env,
         merchant.clone(),
-        tokens.clone(),
+        deduped,
+        env.ledger().timestamp(),
+    );
+}
+
+pub fn remove_merchant_accepted_token(env: &Env, merchant: &Address, token: &Address) {
+    merchant.require_auth();
+
+    if !is_merchant(env, merchant) {
+        panic_with_error!(env, ContractError::MerchantNotFound);
+    }
+
+    let merchant_id = get_merchant_id(env, merchant);
+    if !is_merchant_active(env, merchant_id) {
+        panic_with_error!(env, ContractError::MerchantNotActive);
+    }
+
+    let merchant_tokens = get_merchant_accepted_tokens(env, merchant);
+    let mut updated: Vec<Address> = Vec::new(env);
+    let mut found = false;
+
+    for t in merchant_tokens.iter() {
+        if t == *token {
+            found = true;
+        } else {
+            updated.push_back(t);
+        }
+    }
+
+    if !found {
+        panic_with_error!(env, ContractError::TokenNotAccepted);
+    }
+
+    env.storage()
+        .persistent()
+        .set(&DataKey::MerchantTokens(merchant.clone()), &updated);
+
+    events::publish_merchant_token_removed_event(
+        env,
+        merchant.clone(),
+        token.clone(),
         env.ledger().timestamp(),
     );
 }

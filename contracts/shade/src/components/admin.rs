@@ -1,8 +1,10 @@
 use crate::components::{core, reentrancy};
 use crate::errors::ContractError;
 use crate::events;
-use crate::types::DataKey;
+use crate::types::{DataKey, PendingFee};
 use soroban_sdk::{panic_with_error, token, Address, Env, Vec};
+
+pub const FEE_UPDATE_DELAY: u64 = 172_800; // 48 hours in seconds
 
 // TODO: create the functionality for withdrawing revenue by admin.
 
@@ -129,6 +131,7 @@ pub fn get_fee(env: &Env, token: &Address) -> i128 {
         .unwrap_or(0)
 }
 
+<<<<<<< feature/144-fee-discount-system
 pub fn calculate_fee(env: &Env, merchant: &Address, token: &Address, amount: i128) -> i128 {
     let base_fee = get_fee(env, token);
     if base_fee == 0 {
@@ -180,6 +183,9 @@ fn discount_bps_for_volume(volume: i128) -> i128 {
 
 fn get_accepted_tokens(env: &Env) -> Vec<Address> {
 pub fn get_fee_for_amount(env: &Env, token: &Address, amount: i128) -> i128 {
+=======
+pub fn calculate_fee(env: &Env, token: &Address, amount: i128) -> i128 {
+>>>>>>> main
     let fee_bps: i128 = get_fee(env, token);
     if fee_bps == 0 {
         return 0;
@@ -187,11 +193,85 @@ pub fn get_fee_for_amount(env: &Env, token: &Address, amount: i128) -> i128 {
     (amount * fee_bps) / 10_000i128
 }
 
+pub fn propose_fee(env: &Env, admin: &Address, token: &Address, fee: i128) {
+    reentrancy::enter(env);
+    core::assert_admin(env, admin);
+
+    if !is_accepted_token(env, token) {
+        panic_with_error!(env, ContractError::TokenNotAccepted);
+    }
+
+    let pending = PendingFee {
+        token: token.clone(),
+        fee,
+        proposed_at: env.ledger().timestamp(),
+    };
+
+    env.storage()
+        .persistent()
+        .set(&DataKey::PendingTokenFee(token.clone()), &pending);
+
+    events::publish_fee_proposed_event(
+        env,
+        admin.clone(),
+        token.clone(),
+        fee,
+        env.ledger().timestamp(),
+    );
+    reentrancy::exit(env);
+}
+
+pub fn execute_fee(env: &Env, admin: &Address, token: &Address) {
+    reentrancy::enter(env);
+    core::assert_admin(env, admin);
+
+    let pending: PendingFee = env
+        .storage()
+        .persistent()
+        .get(&DataKey::PendingTokenFee(token.clone()))
+        .unwrap_or_else(|| panic_with_error!(env, ContractError::NoPendingFeeUpdate));
+
+    let elapsed = env.ledger().timestamp() - pending.proposed_at;
+    if elapsed < FEE_UPDATE_DELAY {
+        panic_with_error!(env, ContractError::FeeUpdateTooEarly);
+    }
+
+    env.storage()
+        .persistent()
+        .set(&DataKey::TokenFee(token.clone()), &pending.fee);
+
+    env.storage()
+        .persistent()
+        .remove(&DataKey::PendingTokenFee(token.clone()));
+
+    events::publish_fee_set_event(
+        env,
+        admin.clone(),
+        token.clone(),
+        pending.fee,
+        env.ledger().timestamp(),
+    );
+    reentrancy::exit(env);
+}
+
+pub fn get_pending_fee(env: &Env, token: &Address) -> PendingFee {
+    env.storage()
+        .persistent()
+        .get(&DataKey::PendingTokenFee(token.clone()))
+        .unwrap_or_else(|| panic_with_error!(env, ContractError::NoPendingFeeUpdate))
+}
+
 pub fn propose_admin_transfer(env: &Env, admin: &Address, new_admin: &Address) {
     core::assert_admin(env, admin);
     env.storage()
         .persistent()
         .set(&DataKey::PendingAdmin, new_admin);
+    events::publish_admin_transfer_proposed_event(
+        env,
+        admin.clone(),
+        new_admin.clone(),
+        env.ledger().timestamp(),
+    );
 }
 
 pub fn accept_admin_transfer(env: &Env, new_admin: &Address) {
@@ -206,8 +286,15 @@ pub fn accept_admin_transfer(env: &Env, new_admin: &Address) {
         panic_with_error!(env, ContractError::NotAuthorized);
     }
 
+    let old_admin: Address = core::get_admin(env);
     env.storage().persistent().set(&DataKey::Admin, new_admin);
     env.storage().persistent().remove(&DataKey::PendingAdmin);
+    events::publish_admin_transfer_accepted_event(
+        env,
+        old_admin,
+        new_admin.clone(),
+        env.ledger().timestamp(),
+    );
 }
 
 fn get_accepted_tokens(env: &Env) -> Vec<Address> {

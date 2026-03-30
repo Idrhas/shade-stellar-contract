@@ -486,6 +486,13 @@ pub fn refund_invoice_partial(env: &Env, invoice_id: u64, amount: i128) {
     }
 }
 
+pub fn pay_invoices_batch(env: &Env, payer: &Address, invoice_ids: &Vec<u64>) {
+    payer.require_auth();
+    for invoice_id in invoice_ids.iter() {
+        pay_invoice(env, payer, invoice_id);
+    }
+}
+
 pub fn pay_invoice(env: &Env, payer: &Address, invoice_id: u64) -> i128 {
     let invoice = get_invoice(env, invoice_id);
     if invoice.status != InvoiceStatus::Pending && invoice.status != InvoiceStatus::PartiallyPaid {
@@ -525,7 +532,7 @@ pub fn pay_invoice_partial(env: &Env, payer: &Address, invoice_id: u64, amount: 
         panic_with_error!(env, ContractError::TokenNotAccepted);
     }
 
-    let fee_amount = admin::get_fee_for_amount(env, &invoice.token, amount);
+    let fee_amount = admin::calculate_fee(env, &invoice.token, amount);
     let merchant_amount = amount - fee_amount;
 
     let token_client = token::TokenClient::new(env, &invoice.token);

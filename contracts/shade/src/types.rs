@@ -30,6 +30,8 @@ pub enum DataKey {
     Subscription(u64),
     PlanCount,
     SubscriptionCount,
+    // --- Time-locked fee updates ---
+    PendingTokenFee(Address),
 }
 
 #[contracttype]
@@ -105,11 +107,24 @@ pub enum Role {
     Operator,
 }
 
+<<<<<<< feature/144-fee-discount-system
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct VolumeDiscount {
     pub min_volume: i128,
     pub discount_bps: i128,
+=======
+// ── Time-locked fee update ────────────────────────────────────────────────────
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PendingFee {
+    pub token: Address,
+    pub fee: i128,
+    pub proposed_at: u64,
+}
+
+>>>>>>> main
 // ── Subscription engine ───────────────────────────────────────────────────────
 
 #[contracttype]

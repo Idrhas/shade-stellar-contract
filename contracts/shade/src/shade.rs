@@ -7,8 +7,8 @@ use crate::errors::ContractError;
 use crate::events;
 use crate::interface::ShadeTrait;
 use crate::types::{
-    ContractInfo, DataKey, Invoice, InvoiceFilter, Merchant, MerchantFilter, Role, Subscription,
-    SubscriptionPlan,
+    ContractInfo, DataKey, Invoice, InvoiceFilter, Merchant, MerchantFilter, PendingFee, Role,
+    Subscription, SubscriptionPlan,
 };
 use soroban_sdk::{contract, contractimpl, panic_with_error, Address, BytesN, Env, String, Vec};
 
@@ -66,6 +66,20 @@ impl ShadeTrait for Shade {
 
     fn get_fee(env: Env, token: Address) -> i128 {
         admin_component::get_fee(&env, &token)
+    }
+
+    fn propose_fee(env: Env, admin: Address, token: Address, fee: i128) {
+        pausable_component::assert_not_paused(&env);
+        admin_component::propose_fee(&env, &admin, &token, fee);
+    }
+
+    fn execute_fee(env: Env, admin: Address, token: Address) {
+        pausable_component::assert_not_paused(&env);
+        admin_component::execute_fee(&env, &admin, &token);
+    }
+
+    fn get_pending_fee(env: Env, token: Address) -> PendingFee {
+        admin_component::get_pending_fee(&env, &token)
     }
 
     fn register_merchant(env: Env, merchant: Address) {
@@ -243,6 +257,11 @@ impl ShadeTrait for Shade {
         invoice_component::pay_invoice(&env, &payer, invoice_id);
     }
 
+    fn pay_invoices_batch(env: Env, payer: Address, invoice_ids: Vec<u64>) {
+        pausable_component::assert_not_paused(&env);
+        invoice_component::pay_invoices_batch(&env, &payer, &invoice_ids);
+    }
+
     fn pay_invoice_partial(env: Env, payer: Address, invoice_id: u64, amount: i128) {
         pausable_component::assert_not_paused(&env);
         invoice_component::pay_invoice_partial(&env, &payer, invoice_id, amount);
@@ -323,5 +342,14 @@ impl ShadeTrait for Shade {
 
     fn get_merchant_accepted_tokens(env: Env, merchant: Address) -> Vec<Address> {
         merchant_component::get_merchant_accepted_tokens(&env, &merchant)
+    }
+
+    fn remove_merchant_accepted_token(env: Env, merchant: Address, token: Address) {
+        pausable_component::assert_not_paused(&env);
+        merchant_component::remove_merchant_accepted_token(&env, &merchant, &token);
+    }
+
+    fn is_token_accepted_for_merchant(env: Env, merchant: Address, token: Address) -> bool {
+        merchant_component::is_token_accepted_for_merchant(&env, &merchant, &token)
     }
 }

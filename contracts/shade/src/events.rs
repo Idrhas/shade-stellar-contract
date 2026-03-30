@@ -277,6 +277,30 @@ pub fn publish_contract_unpaused_event(env: &Env, admin: Address, timestamp: u64
 }
 
 #[contractevent]
+pub struct FeeProposedEvent {
+    pub admin: Address,
+    pub token: Address,
+    pub fee: i128,
+    pub timestamp: u64,
+}
+
+pub fn publish_fee_proposed_event(
+    env: &Env,
+    admin: Address,
+    token: Address,
+    fee: i128,
+    timestamp: u64,
+) {
+    FeeProposedEvent {
+        admin,
+        token,
+        fee,
+        timestamp,
+    }
+    .publish(env);
+}
+
+#[contractevent]
 pub struct FeeSetEvent {
     pub admin: Address,
     pub token: Address,
@@ -631,6 +655,71 @@ pub fn publish_merchant_tokens_set_event(
     MerchantTokensSetEvent {
         merchant,
         tokens,
+        timestamp,
+    }
+    .publish(env);
+}
+
+#[contractevent]
+pub struct MerchantTokenRemovedEvent {
+    pub merchant: Address,
+    pub token: Address,
+    pub timestamp: u64,
+}
+
+pub fn publish_merchant_token_removed_event(
+    env: &Env,
+    merchant: Address,
+    token: Address,
+    timestamp: u64,
+) {
+    MerchantTokenRemovedEvent {
+        merchant,
+        token,
+        timestamp,
+    }
+    .publish(env);
+}
+
+// ── Admin transfer events ────────────────────────────────────────────────────
+
+#[contractevent]
+pub struct AdminTransferProposedEvent {
+    pub current_admin: Address,
+    pub proposed_admin: Address,
+    pub timestamp: u64,
+}
+
+pub fn publish_admin_transfer_proposed_event(
+    env: &Env,
+    current_admin: Address,
+    proposed_admin: Address,
+    timestamp: u64,
+) {
+    AdminTransferProposedEvent {
+        current_admin,
+        proposed_admin,
+        timestamp,
+    }
+    .publish(env);
+}
+
+#[contractevent]
+pub struct AdminTransferAcceptedEvent {
+    pub old_admin: Address,
+    pub new_admin: Address,
+    pub timestamp: u64,
+}
+
+pub fn publish_admin_transfer_accepted_event(
+    env: &Env,
+    old_admin: Address,
+    new_admin: Address,
+    timestamp: u64,
+) {
+    AdminTransferAcceptedEvent {
+        old_admin,
+        new_admin,
         timestamp,
     }
     .publish(env);
