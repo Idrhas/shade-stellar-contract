@@ -25,7 +25,8 @@ fn setup_env() -> (Env, ShadeClient<'static>, Address, Address) {
 }
 
 fn make_token(env: &Env, admin: &Address) -> Address {
-    env.register_stellar_asset_contract_v2(admin.clone()).address()
+    env.register_stellar_asset_contract_v2(admin.clone())
+        .address()
 }
 
 /// Register a merchant, add a token, and create invoices at the given
@@ -75,7 +76,12 @@ fn no_filter() -> InvoiceFilter {
 #[test]
 fn test_no_date_filter_returns_all_invoices() {
     let (env, client, _, admin) = setup_env();
-    create_invoices_at(&env, &client, &admin, &[(1000, 100), (2000, 200), (3000, 300)]);
+    create_invoices_at(
+        &env,
+        &client,
+        &admin,
+        &[(1000, 100), (2000, 200), (3000, 300)],
+    );
 
     let result = client.get_invoices(&no_filter());
     assert_eq!(result.len(), 3);
@@ -84,9 +90,17 @@ fn test_no_date_filter_returns_all_invoices() {
 #[test]
 fn test_start_date_excludes_earlier_invoices() {
     let (env, client, _, admin) = setup_env();
-    create_invoices_at(&env, &client, &admin, &[(1000, 100), (2000, 200), (3000, 300)]);
+    create_invoices_at(
+        &env,
+        &client,
+        &admin,
+        &[(1000, 100), (2000, 200), (3000, 300)],
+    );
 
-    let filter = InvoiceFilter { start_date: Some(2000), ..no_filter() };
+    let filter = InvoiceFilter {
+        start_date: Some(2000),
+        ..no_filter()
+    };
     let result = client.get_invoices(&filter);
 
     assert_eq!(result.len(), 2);
@@ -96,9 +110,17 @@ fn test_start_date_excludes_earlier_invoices() {
 #[test]
 fn test_end_date_excludes_later_invoices() {
     let (env, client, _, admin) = setup_env();
-    create_invoices_at(&env, &client, &admin, &[(1000, 100), (2000, 200), (3000, 300)]);
+    create_invoices_at(
+        &env,
+        &client,
+        &admin,
+        &[(1000, 100), (2000, 200), (3000, 300)],
+    );
 
-    let filter = InvoiceFilter { end_date: Some(2000), ..no_filter() };
+    let filter = InvoiceFilter {
+        end_date: Some(2000),
+        ..no_filter()
+    };
     let result = client.get_invoices(&filter);
 
     assert_eq!(result.len(), 2);
@@ -108,7 +130,12 @@ fn test_end_date_excludes_later_invoices() {
 #[test]
 fn test_date_range_returns_only_invoices_within_window() {
     let (env, client, _, admin) = setup_env();
-    create_invoices_at(&env, &client, &admin, &[(1000, 100), (2000, 200), (3000, 300)]);
+    create_invoices_at(
+        &env,
+        &client,
+        &admin,
+        &[(1000, 100), (2000, 200), (3000, 300)],
+    );
 
     let filter = InvoiceFilter {
         start_date: Some(1500),
@@ -126,7 +153,10 @@ fn test_start_date_equals_invoice_timestamp_is_inclusive() {
     let (env, client, _, admin) = setup_env();
     create_invoices_at(&env, &client, &admin, &[(1000, 100), (2000, 200)]);
 
-    let filter = InvoiceFilter { start_date: Some(1000), ..no_filter() };
+    let filter = InvoiceFilter {
+        start_date: Some(1000),
+        ..no_filter()
+    };
     let result = client.get_invoices(&filter);
 
     assert_eq!(result.len(), 2);
@@ -138,7 +168,10 @@ fn test_end_date_equals_invoice_timestamp_is_inclusive() {
     let (env, client, _, admin) = setup_env();
     create_invoices_at(&env, &client, &admin, &[(1000, 100), (2000, 200)]);
 
-    let filter = InvoiceFilter { end_date: Some(2000), ..no_filter() };
+    let filter = InvoiceFilter {
+        end_date: Some(2000),
+        ..no_filter()
+    };
     let result = client.get_invoices(&filter);
 
     assert_eq!(result.len(), 2);
@@ -148,7 +181,12 @@ fn test_end_date_equals_invoice_timestamp_is_inclusive() {
 #[test]
 fn test_single_point_range_matches_exact_timestamp() {
     let (env, client, _, admin) = setup_env();
-    create_invoices_at(&env, &client, &admin, &[(1000, 100), (2000, 200), (3000, 300)]);
+    create_invoices_at(
+        &env,
+        &client,
+        &admin,
+        &[(1000, 100), (2000, 200), (3000, 300)],
+    );
 
     let filter = InvoiceFilter {
         start_date: Some(2000),
@@ -194,7 +232,10 @@ fn test_start_date_one_past_last_invoice_returns_empty() {
     let (env, client, _, admin) = setup_env();
     create_invoices_at(&env, &client, &admin, &[(1000, 100), (2000, 200)]);
 
-    let filter = InvoiceFilter { start_date: Some(2001), ..no_filter() };
+    let filter = InvoiceFilter {
+        start_date: Some(2001),
+        ..no_filter()
+    };
     let result = client.get_invoices(&filter);
     assert_eq!(result.len(), 0);
 }
@@ -204,7 +245,10 @@ fn test_end_date_one_before_first_invoice_returns_empty() {
     let (env, client, _, admin) = setup_env();
     create_invoices_at(&env, &client, &admin, &[(1000, 100), (2000, 200)]);
 
-    let filter = InvoiceFilter { end_date: Some(999), ..no_filter() };
+    let filter = InvoiceFilter {
+        end_date: Some(999),
+        ..no_filter()
+    };
     let result = client.get_invoices(&filter);
     assert_eq!(result.len(), 0);
 }
@@ -212,7 +256,12 @@ fn test_end_date_one_before_first_invoice_returns_empty() {
 #[test]
 fn test_full_range_spanning_all_invoices_returns_all() {
     let (env, client, _, admin) = setup_env();
-    create_invoices_at(&env, &client, &admin, &[(1000, 100), (2000, 200), (3000, 300)]);
+    create_invoices_at(
+        &env,
+        &client,
+        &admin,
+        &[(1000, 100), (2000, 200), (3000, 300)],
+    );
 
     let filter = InvoiceFilter {
         start_date: Some(1000),
@@ -230,7 +279,12 @@ fn test_full_range_spanning_all_invoices_returns_all() {
 #[test]
 fn test_date_range_combined_with_status_pending() {
     let (env, client, _, admin) = setup_env();
-    create_invoices_at(&env, &client, &admin, &[(1000, 100), (2000, 200), (3000, 300)]);
+    create_invoices_at(
+        &env,
+        &client,
+        &admin,
+        &[(1000, 100), (2000, 200), (3000, 300)],
+    );
 
     // All invoices are Pending; date range [1000, 2000] ? 2 results
     let filter = InvoiceFilter {
@@ -241,7 +295,9 @@ fn test_date_range_combined_with_status_pending() {
     };
     let result = client.get_invoices(&filter);
     assert_eq!(result.len(), 2);
-    assert!(result.iter().all(|inv| inv.status == InvoiceStatus::Pending));
+    assert!(result
+        .iter()
+        .all(|inv| inv.status == InvoiceStatus::Pending));
 }
 
 #[test]
@@ -264,7 +320,12 @@ fn test_date_range_combined_with_status_paid_returns_empty() {
 fn test_date_range_combined_with_min_amount() {
     let (env, client, _, admin) = setup_env();
     // Invoices: ts=1000 amount=100, ts=2000 amount=200, ts=3000 amount=300
-    create_invoices_at(&env, &client, &admin, &[(1000, 100), (2000, 200), (3000, 300)]);
+    create_invoices_at(
+        &env,
+        &client,
+        &admin,
+        &[(1000, 100), (2000, 200), (3000, 300)],
+    );
 
     // Date range [1000, 2000] AND min_amount=200 ? only invoice at ts=2000
     let filter = InvoiceFilter {
@@ -282,7 +343,12 @@ fn test_date_range_combined_with_min_amount() {
 #[test]
 fn test_date_range_combined_with_max_amount() {
     let (env, client, _, admin) = setup_env();
-    create_invoices_at(&env, &client, &admin, &[(1000, 100), (2000, 200), (3000, 300)]);
+    create_invoices_at(
+        &env,
+        &client,
+        &admin,
+        &[(1000, 100), (2000, 200), (3000, 300)],
+    );
 
     // Date range [2000, 3000] AND max_amount=200 ? only invoice at ts=2000
     let filter = InvoiceFilter {
@@ -299,7 +365,12 @@ fn test_date_range_combined_with_max_amount() {
 #[test]
 fn test_date_range_combined_with_amount_range() {
     let (env, client, _, admin) = setup_env();
-    create_invoices_at(&env, &client, &admin, &[(1000, 100), (2000, 200), (3000, 300)]);
+    create_invoices_at(
+        &env,
+        &client,
+        &admin,
+        &[(1000, 100), (2000, 200), (3000, 300)],
+    );
 
     // Date [1000, 3000] AND amount [150, 250] ? only invoice at ts=2000 (amount=200)
     let filter = InvoiceFilter {
@@ -328,13 +399,31 @@ fn test_date_range_combined_with_merchant_filter() {
     client.add_accepted_token(&admin, &token);
 
     env.ledger().set_timestamp(1000);
-    client.create_invoice(&merchant_a, &String::from_str(&env, "A1"), &100, &token, &None);
+    client.create_invoice(
+        &merchant_a,
+        &String::from_str(&env, "A1"),
+        &100,
+        &token,
+        &None,
+    );
 
     env.ledger().set_timestamp(2000);
-    client.create_invoice(&merchant_b, &String::from_str(&env, "B1"), &200, &token, &None);
+    client.create_invoice(
+        &merchant_b,
+        &String::from_str(&env, "B1"),
+        &200,
+        &token,
+        &None,
+    );
 
     env.ledger().set_timestamp(3000);
-    client.create_invoice(&merchant_a, &String::from_str(&env, "A2"), &300, &token, &None);
+    client.create_invoice(
+        &merchant_a,
+        &String::from_str(&env, "A2"),
+        &300,
+        &token,
+        &None,
+    );
 
     // Filter: merchant_a AND date range [1000, 2000] ? only A1
     let filter = InvoiceFilter {
@@ -401,13 +490,7 @@ fn test_many_invoices_only_middle_ones_match() {
         &env,
         &client,
         &admin,
-        &[
-            (100, 100),
-            (200, 100),
-            (300, 100),
-            (400, 100),
-            (500, 100),
-        ],
+        &[(100, 100), (200, 100), (300, 100), (400, 100), (500, 100)],
     );
 
     let filter = InvoiceFilter {

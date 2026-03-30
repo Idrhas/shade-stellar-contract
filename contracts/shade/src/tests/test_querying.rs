@@ -266,8 +266,20 @@ fn test_get_invoices_filter_by_status_pending() {
     let token = create_token(&env);
     client.add_accepted_token(&admin, &token);
 
-    client.create_invoice(&merchant, &String::from_str(&env, "Inv 1"), &100, &token, &None);
-    client.create_invoice(&merchant, &String::from_str(&env, "Inv 2"), &200, &token, &None);
+    client.create_invoice(
+        &merchant,
+        &String::from_str(&env, "Inv 1"),
+        &100,
+        &token,
+        &None,
+    );
+    client.create_invoice(
+        &merchant,
+        &String::from_str(&env, "Inv 2"),
+        &200,
+        &token,
+        &None,
+    );
 
     let filter = InvoiceFilter {
         status: Some(InvoiceStatus::Pending as u32),
@@ -290,8 +302,20 @@ fn test_get_invoices_filter_by_status_cancelled() {
     let token = create_token(&env);
     client.add_accepted_token(&admin, &token);
 
-    let id1 = client.create_invoice(&merchant, &String::from_str(&env, "Inv 1"), &100, &token, &None);
-    client.create_invoice(&merchant, &String::from_str(&env, "Inv 2"), &200, &token, &None);
+    let id1 = client.create_invoice(
+        &merchant,
+        &String::from_str(&env, "Inv 1"),
+        &100,
+        &token,
+        &None,
+    );
+    client.create_invoice(
+        &merchant,
+        &String::from_str(&env, "Inv 2"),
+        &200,
+        &token,
+        &None,
+    );
 
     client.void_invoice(&merchant, &id1);
 
@@ -319,9 +343,27 @@ fn test_get_invoices_filter_by_min_amount() {
     let token = create_token(&env);
     client.add_accepted_token(&admin, &token);
 
-    client.create_invoice(&merchant, &String::from_str(&env, "Cheap"), &50, &token, &None);
-    client.create_invoice(&merchant, &String::from_str(&env, "Mid"), &150, &token, &None);
-    client.create_invoice(&merchant, &String::from_str(&env, "Expensive"), &500, &token, &None);
+    client.create_invoice(
+        &merchant,
+        &String::from_str(&env, "Cheap"),
+        &50,
+        &token,
+        &None,
+    );
+    client.create_invoice(
+        &merchant,
+        &String::from_str(&env, "Mid"),
+        &150,
+        &token,
+        &None,
+    );
+    client.create_invoice(
+        &merchant,
+        &String::from_str(&env, "Expensive"),
+        &500,
+        &token,
+        &None,
+    );
 
     let filter = InvoiceFilter {
         min_amount: Some(150),
@@ -344,9 +386,27 @@ fn test_get_invoices_filter_by_max_amount() {
     let token = create_token(&env);
     client.add_accepted_token(&admin, &token);
 
-    client.create_invoice(&merchant, &String::from_str(&env, "Cheap"), &50, &token, &None);
-    client.create_invoice(&merchant, &String::from_str(&env, "Mid"), &150, &token, &None);
-    client.create_invoice(&merchant, &String::from_str(&env, "Expensive"), &500, &token, &None);
+    client.create_invoice(
+        &merchant,
+        &String::from_str(&env, "Cheap"),
+        &50,
+        &token,
+        &None,
+    );
+    client.create_invoice(
+        &merchant,
+        &String::from_str(&env, "Mid"),
+        &150,
+        &token,
+        &None,
+    );
+    client.create_invoice(
+        &merchant,
+        &String::from_str(&env, "Expensive"),
+        &500,
+        &token,
+        &None,
+    );
 
     let filter = InvoiceFilter {
         max_amount: Some(150),
@@ -370,9 +430,27 @@ fn test_get_invoices_filter_by_amount_range() {
     client.add_accepted_token(&admin, &token);
 
     client.create_invoice(&merchant, &String::from_str(&env, "10"), &10, &token, &None);
-    client.create_invoice(&merchant, &String::from_str(&env, "100"), &100, &token, &None);
-    client.create_invoice(&merchant, &String::from_str(&env, "200"), &200, &token, &None);
-    client.create_invoice(&merchant, &String::from_str(&env, "500"), &500, &token, &None);
+    client.create_invoice(
+        &merchant,
+        &String::from_str(&env, "100"),
+        &100,
+        &token,
+        &None,
+    );
+    client.create_invoice(
+        &merchant,
+        &String::from_str(&env, "200"),
+        &200,
+        &token,
+        &None,
+    );
+    client.create_invoice(
+        &merchant,
+        &String::from_str(&env, "500"),
+        &500,
+        &token,
+        &None,
+    );
 
     let filter = InvoiceFilter {
         min_amount: Some(100),
@@ -402,9 +480,27 @@ fn test_get_invoices_combined_merchant_and_status() {
     let token = create_token(&env);
     client.add_accepted_token(&admin, &token);
 
-    let id1 = client.create_invoice(&m1, &String::from_str(&env, "M1 Active"), &100, &token, &None);
-    client.create_invoice(&m1, &String::from_str(&env, "M1 Voided"), &200, &token, &None);
-    client.create_invoice(&m2, &String::from_str(&env, "M2 Active"), &300, &token, &None);
+    let id1 = client.create_invoice(
+        &m1,
+        &String::from_str(&env, "M1 Active"),
+        &100,
+        &token,
+        &None,
+    );
+    client.create_invoice(
+        &m1,
+        &String::from_str(&env, "M1 Voided"),
+        &200,
+        &token,
+        &None,
+    );
+    client.create_invoice(
+        &m2,
+        &String::from_str(&env, "M2 Active"),
+        &300,
+        &token,
+        &None,
+    );
 
     // void invoice 2 (id = 2)
     client.void_invoice(&m1, &2u64);
@@ -434,8 +530,20 @@ fn test_get_invoices_combined_merchant_and_amount_range() {
     client.add_accepted_token(&admin, &token);
 
     client.create_invoice(&m1, &String::from_str(&env, "M1 small"), &50, &token, &None);
-    client.create_invoice(&m1, &String::from_str(&env, "M1 large"), &1000, &token, &None);
-    client.create_invoice(&m2, &String::from_str(&env, "M2 large"), &1000, &token, &None);
+    client.create_invoice(
+        &m1,
+        &String::from_str(&env, "M1 large"),
+        &1000,
+        &token,
+        &None,
+    );
+    client.create_invoice(
+        &m2,
+        &String::from_str(&env, "M2 large"),
+        &1000,
+        &token,
+        &None,
+    );
 
     let filter = InvoiceFilter {
         merchant: Some(m1.clone()),
@@ -459,8 +567,20 @@ fn test_get_invoices_combined_status_and_amount() {
     let token = create_token(&env);
     client.add_accepted_token(&admin, &token);
 
-    let id_small = client.create_invoice(&merchant, &String::from_str(&env, "Small"), &50, &token, &None);
-    client.create_invoice(&merchant, &String::from_str(&env, "Large"), &500, &token, &None);
+    let id_small = client.create_invoice(
+        &merchant,
+        &String::from_str(&env, "Small"),
+        &50,
+        &token,
+        &None,
+    );
+    client.create_invoice(
+        &merchant,
+        &String::from_str(&env, "Large"),
+        &500,
+        &token,
+        &None,
+    );
 
     // void small invoice
     client.void_invoice(&merchant, &id_small);
@@ -579,7 +699,13 @@ fn test_get_invoices_status_filter_no_match() {
     let token = create_token(&env);
     client.add_accepted_token(&admin, &token);
 
-    client.create_invoice(&merchant, &String::from_str(&env, "Inv"), &100, &token, &None);
+    client.create_invoice(
+        &merchant,
+        &String::from_str(&env, "Inv"),
+        &100,
+        &token,
+        &None,
+    );
     // invoice is Pending; querying Paid returns nothing
 
     let filter = InvoiceFilter {
@@ -600,7 +726,13 @@ fn test_get_invoices_amount_range_no_match() {
     let token = create_token(&env);
     client.add_accepted_token(&admin, &token);
 
-    client.create_invoice(&merchant, &String::from_str(&env, "Inv"), &100, &token, &None);
+    client.create_invoice(
+        &merchant,
+        &String::from_str(&env, "Inv"),
+        &100,
+        &token,
+        &None,
+    );
 
     // min > max of existing invoices
     let filter = InvoiceFilter {
