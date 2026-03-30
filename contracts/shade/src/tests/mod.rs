@@ -1,4 +1,4 @@
-pub mod test;
+﻿pub mod test;
 pub mod test_accepted_tokens;
 pub mod test_access_control;
 pub mod test_account_factory;
@@ -10,6 +10,7 @@ pub mod test_date_range_filter;
 pub mod test_draft_invoice;
 pub mod test_fees;
 pub mod test_invoice;
+pub mod test_invoice_amendment;
 pub mod test_invoice_expiry;
 pub mod test_invoice_filter;
 pub mod test_invoice_partial_refund;
