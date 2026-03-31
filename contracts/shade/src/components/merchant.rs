@@ -36,6 +36,7 @@ pub fn register_merchant(env: &Env, merchant: &Address) {
         active: true,
         verified: false,
         date_registered: env.ledger().timestamp(),
+        account: merchant.clone(),
     };
 
     env.storage()

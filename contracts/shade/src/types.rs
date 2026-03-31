@@ -22,7 +22,6 @@ pub enum DataKey {
     ReentrancyStatus,
     AccountWasmHash,
     Role(Address, Role),
-    MerchantVolume(Address),
     UsedNonce(Address, BytesN<32>),
     // --- Subscription engine ---
     SubscriptionPlan(u64),
@@ -31,6 +30,8 @@ pub enum DataKey {
     SubscriptionCount,
     // --- Time-locked fee updates ---
     PendingTokenFee(Address),
+    // --- Fee discount system ---
+    MerchantVolume(Address, Address),
 }
 
 #[contracttype]
@@ -48,6 +49,7 @@ pub struct Merchant {
     pub active: bool,
     pub verified: bool,
     pub date_registered: u64,
+    pub account: Address,
 }
 
 #[contracttype]
