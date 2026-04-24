@@ -1,6 +1,6 @@
 use crate::types::{
     Invoice, InvoiceFilter, Merchant, MerchantFilter, PendingFee, Role, Subscription,
-    SubscriptionPlan,
+    SubscriptionPlan, Transaction,
 };
 use soroban_sdk::{contracttrait, Address, BytesN, Env, String, Vec};
 
@@ -134,4 +134,7 @@ pub trait ShadeTrait {
 
     /// Cancel a subscription. Either the customer or the merchant may call this.
     fn cancel_subscription(env: Env, caller: Address, subscription_id: u64);
+
+    /// Get all transactions executed by a specific customer address.
+    fn get_user_transactions(env: Env, user: Address) -> Vec<Transaction>;
 }
