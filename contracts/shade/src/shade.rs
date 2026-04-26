@@ -327,6 +327,10 @@ impl ShadeTrait for Shade {
         invoice_component::pay_invoice_partial(&env, &payer, invoice_id, amount);
     }
 
+    fn validate_payment_payload(env: Env, payload: PaymentPayload) {
+        payment_component::validate_payment_payload(&env, &payload);
+    }
+
     fn void_invoice(env: Env, merchant: Address, invoice_id: u64) {
         pausable_component::assert_not_paused(&env);
         invoice_component::void_invoice(&env, &merchant, invoice_id);
