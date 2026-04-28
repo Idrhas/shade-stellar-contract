@@ -7,6 +7,8 @@ use crate::types::{
 use soroban_sdk::{panic_with_error, token, Address, Env, Vec};
 
 pub const FEE_UPDATE_DELAY: u64 = 172_800; // 48 hours in seconds
+pub const DAY_IN_SECONDS: u64 = 86400;
+pub const WEEK_IN_SECONDS: u64 = 604800;
 
 // TODO: create the functionality for withdrawing revenue by admin.
 

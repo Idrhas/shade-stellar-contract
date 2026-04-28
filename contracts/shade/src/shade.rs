@@ -296,6 +296,21 @@ impl ShadeTrait for Shade {
     fn get_merchant_volume(env: Env, merchant: Address, token: Address) -> i128 {
         admin_component::get_merchant_volume(&env, &merchant, &token)
     }
+    fn get_daily_volume(env: Env, token: Address) -> i128 {
+        admin_component::get_daily_volume(&env, &token)
+    }
+
+    fn get_weekly_volume(env: Env, token: Address) -> i128 {
+        admin_component::get_weekly_volume(&env, &token)
+    }
+
+    fn get_merchant_daily_volume(env: Env, merchant: Address, token: Address) -> i128 {
+        admin_component::get_merchant_daily_volume(&env, &merchant, &token)
+    }
+
+    fn get_merchant_weekly_volume(env: Env, merchant: Address, token: Address) -> i128 {
+        admin_component::get_merchant_weekly_volume(&env, &merchant, &token)
+    }
 
     fn get_merchant_analytics(env: Env, merchant: Address, token: Address) -> MerchantAnalytics {
         admin_component::get_merchant_analytics(&env, &merchant, &token)
